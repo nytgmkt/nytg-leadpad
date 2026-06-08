@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>NYTG · Bharat Tex 2026 — Lead App</title>
+<title id="page-title">Lead App</title>
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -390,7 +390,7 @@ button,input,select,textarea{font-family:inherit}
   <!-- ════════ SIDEBAR ════════ -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
-      <div class="sidebar-brand-title">NYTG · Bharat Tex 2026</div>
+      <div class="sidebar-brand-title" id="sidebar-brand-title"></div>
       <div class="sidebar-brand-sub">Lead Management App</div>
     </div>
 
@@ -398,7 +398,7 @@ button,input,select,textarea{font-family:inherit}
     <div class="sidebar-booth-badge" id="sidebar-booth-badge" style="display:none">
       <span class="material-symbols-outlined">store</span>
       <div>
-        <div class="sidebar-booth-badge-text">Booth #NYTG</div>
+        <div class="sidebar-booth-badge-text" id="sidebar-booth-badge-text"></div>
         <div style="font-size:10px;color:var(--teal-dk)">Lead Sync Active</div>
       </div>
       <div class="sidebar-booth-badge-dot"></div>
@@ -440,7 +440,7 @@ button,input,select,textarea{font-family:inherit}
     </div>
 
     <div class="sidebar-footer">
-      <div class="sidebar-footer-text">Global Textile Expo · Hall 5</div>
+      <div class="sidebar-footer-text" id="sidebar-footer-text"></div>
     </div>
   </aside>
 
@@ -497,13 +497,7 @@ button,input,select,textarea{font-family:inherit}
             <div class="card-header">
               <h4><span class="material-symbols-outlined">sensors</span> How did you hear about us? *</h4>
             </div>
-            <div class="chip-row">
-              <button class="chip" onclick="selectSource(this,'Facebook Ad')">Facebook Ad</button>
-              <button class="chip" onclick="selectSource(this,'Instagram')">Instagram</button>
-              <button class="chip" onclick="selectSource(this,'LinkedIn')">LinkedIn</button>
-              <button class="chip" onclick="selectSource(this,'Bharat Tex booth')">Bharat Tex booth</button>
-              <button class="chip" onclick="selectSource(this,'Other')">Other</button>
-            </div>
+            <div class="chip-row" id="source-chips"></div>
             <div class="salesperson-field" id="salesperson-field">
               <div class="field" style="margin-top:10px;margin-bottom:0">
                 <label>Sales person who assisted you</label>
@@ -516,36 +510,13 @@ button,input,select,textarea{font-family:inherit}
             <div class="card-header">
               <h4><span class="material-symbols-outlined">inventory_2</span> Fabric interest *</h4>
             </div>
-            <div class="fabric-grid">
-              <div class="fabric-card" onclick="toggleFabric(this,'Elitech 360')">
-                <div class="fc-icon">⚡</div>
-                <div class="fc-name">Elitech 360</div>
-                <div class="fc-sub">Stretch &amp; durability</div>
-              </div>
-              <div class="fabric-card" onclick="toggleFabric(this,'Dry-Tech')">
-                <div class="fc-icon">💧</div>
-                <div class="fc-name">Dry-Tech</div>
-                <div class="fc-sub">Moisture management</div>
-              </div>
-              <div class="fabric-card" onclick="toggleFabric(this,'Recycled Fabric')">
-                <div class="fc-icon">♻️</div>
-                <div class="fc-name">Recycled Fabric</div>
-                <div class="fc-sub">Circular fashion</div>
-              </div>
-            </div>
+            <div class="fabric-grid" id="fabric-cards"></div>
 
             <div style="margin-top:16px">
               <div class="field" style="margin-bottom:6px">
                 <label>Apparel type (select all that apply)</label>
               </div>
-              <div class="chip-row">
-                <button class="chip" onclick="toggleChip(this)">Workwear</button>
-                <button class="chip" onclick="toggleChip(this)">Uniform</button>
-                <button class="chip" onclick="toggleChip(this)">Polo shirt</button>
-                <button class="chip" onclick="toggleChip(this)">Activewear</button>
-                <button class="chip" onclick="toggleChip(this)">Casualwear</button>
-                <button class="chip" onclick="toggleChip(this)">Others</button>
-              </div>
+              <div class="chip-row" id="apparel-chips"></div>
             </div>
           </div>
 
@@ -623,15 +594,7 @@ button,input,select,textarea{font-family:inherit}
           </div>
         </div>
 
-        <div class="filter-row">
-          <button class="filter-pill on" onclick="setFilter('All',this)">All</button>
-          <button class="filter-pill" onclick="setFilter('Elitech 360',this)">Elitech 360</button>
-          <button class="filter-pill" onclick="setFilter('Dry-Tech',this)">Dry-Tech</button>
-          <button class="filter-pill" onclick="setFilter('Recycled Fabric',this)">Recycled</button>
-          <button class="filter-pill" onclick="setFilter('Hot',this)">🔥 Hot</button>
-          <button class="filter-pill" onclick="setFilter('Booth',this)">Booth</button>
-          <button class="filter-pill" onclick="setFilter('Online',this)">Online</button>
-        </div>
+        <div class="filter-row" id="dash-filters"></div>
 
         <div id="dash-list" class="lead-list">
           <div class="empty">
@@ -664,7 +627,7 @@ button,input,select,textarea{font-family:inherit}
               <div class="card">
                 <div class="card-header">
                   <h4><span class="material-symbols-outlined">person_add</span> New contact</h4>
-                  <span class="card-tag">V-ID: NYTG-BT26</span>
+                  <span class="card-tag" id="booth-vid-tag"></span>
                 </div>
                 <div class="grid2">
                   <div class="field"><label>Name *</label><input id="b-name" placeholder="Full name" tabindex="1"></div>
@@ -677,10 +640,6 @@ button,input,select,textarea{font-family:inherit}
                     <label>Fabric interest</label>
                     <select id="b-fabric" tabindex="5">
                       <option value="">Select...</option>
-                      <option>Elitech 360</option>
-                      <option>Dry-Tech</option>
-                      <option>Recycled Fabric</option>
-                      <option>Multiple / TBD</option>
                     </select>
                   </div>
                   <div class="field">
@@ -690,20 +649,7 @@ button,input,select,textarea{font-family:inherit}
                 </div>
                 <div class="field">
                   <label>Priority</label>
-                  <div class="priority-row">
-                    <div class="priority-opt">
-                      <input type="radio" name="b-priority" id="bp-hot" value="Hot">
-                      <label for="bp-hot" class="p-hot">🔥 Hot</label>
-                    </div>
-                    <div class="priority-opt">
-                      <input type="radio" name="b-priority" id="bp-warm" value="Warm" checked>
-                      <label for="bp-warm" class="p-warm">🌤 Warm</label>
-                    </div>
-                    <div class="priority-opt">
-                      <input type="radio" name="b-priority" id="bp-cold" value="Cold">
-                      <label for="bp-cold" class="p-cold">❄️ Cold</label>
-                    </div>
-                  </div>
+                  <div class="priority-row" id="booth-priority-row"></div>
                 </div>
                 <div class="field">
                   <label>Note</label>
@@ -745,14 +691,62 @@ button,input,select,textarea{font-family:inherit}
 
 <script>
 /* ════════════════════════════════════
-   CONFIG
+   EVENT CONFIG — edit this object to adapt the app to any event
 ════════════════════════════════════ */
-const ADMIN_PASSWORD = 'nytg2026';
+const EVENT_CONFIG = {
+  /* Branding */
+  eventName:    'Bharat Tex 2026',
+  orgName:      'NYTG',
+  venueLine:    'Global Textile Expo · Hall 5',
+
+  /* Auth */
+  adminPassword: 'nytg2026',
+
+  /* Storage */
+  storageKey: 'nytg_leads',
+
+  /* Booth identifier shown in sidebar badge and booth form tag */
+  boothId: 'NYTG-BT26',
+
+  /* Fabric products shown as selectable cards on the public form
+     and as options in the booth entry select.
+     badgeClass must match one of: badge-teal, badge-blue, badge-amber, badge-gray */
+  fabrics: [
+    { name: 'Elitech 360',    icon: '⚡',  sub: 'Stretch & durability',  badgeClass: 'badge-teal'  },
+    { name: 'Dry-Tech',       icon: '💧',  sub: 'Moisture management',   badgeClass: 'badge-blue'  },
+    { name: 'Recycled Fabric', icon: '♻️', sub: 'Circular fashion',      badgeClass: 'badge-amber' },
+  ],
+
+  /* Extra option appended to the booth fabric select (not a card) */
+  fabricSelectExtras: ['Multiple / TBD'],
+
+  /* Apparel-type chips on the public form */
+  apparelTypes: ['Workwear', 'Uniform', 'Polo shirt', 'Activewear', 'Casualwear', 'Others'],
+
+  /* Lead-source chips on the public form.
+     Set showsSalesperson:true on whichever source should reveal the salesperson input. */
+  sources: [
+    { label: 'Facebook Ad' },
+    { label: 'Instagram' },
+    { label: 'LinkedIn' },
+    { label: 'Bharat Tex booth', showsSalesperson: true },
+    { label: 'Other' },
+  ],
+
+  /* Priority levels used in booth entry form, lead cards, and dashboard stats.
+     cssClass must match one of: p-hot, p-warm, p-cold.
+     badgeClass must match one of: badge-red, badge-amber, badge-blue. */
+  priorities: [
+    { value: 'Hot',  label: '🔥 Hot',  cssClass: 'p-hot',  badgeClass: 'badge-red'   },
+    { value: 'Warm', label: '🌤 Warm', cssClass: 'p-warm', badgeClass: 'badge-amber', default: true },
+    { value: 'Cold', label: '❄️ Cold', cssClass: 'p-cold', badgeClass: 'badge-blue'  },
+  ],
+};
 
 /* ════════════════════════════════════
    STATE
 ════════════════════════════════════ */
-let leads = JSON.parse(localStorage.getItem('nytg_leads') || '[]');
+let leads = JSON.parse(localStorage.getItem(EVENT_CONFIG.storageKey) || '[]');
 let selectedFabrics = [];
 let selectedApparel = [];
 let selectedSource = '';
@@ -761,10 +755,82 @@ let boothFormOpen = false;
 let unlocked = false;
 
 /* ════════════════════════════════════
+   INIT — populate all config-driven UI
+════════════════════════════════════ */
+function initUI() {
+  const { eventName, orgName, boothId, venueLine, fabrics, fabricSelectExtras,
+          apparelTypes, sources, priorities } = EVENT_CONFIG;
+
+  /* Page title & sidebar brand */
+  document.title = `${orgName} · ${eventName} — Lead App`;
+  document.getElementById('sidebar-brand-title').textContent = `${orgName} · ${eventName}`;
+  document.getElementById('sidebar-booth-badge-text').textContent = `Booth #${orgName}`;
+  document.getElementById('sidebar-footer-text').textContent = venueLine;
+  document.getElementById('booth-vid-tag').textContent = `V-ID: ${boothId}`;
+
+  /* Source chips */
+  const sourceContainer = document.getElementById('source-chips');
+  sourceContainer.innerHTML = sources.map(s =>
+    `<button class="chip" onclick="selectSource(this,${JSON.stringify(s.label)})">${esc(s.label)}</button>`
+  ).join('');
+
+  /* Fabric cards */
+  const fabricContainer = document.getElementById('fabric-cards');
+  fabricContainer.innerHTML = fabrics.map(f =>
+    `<div class="fabric-card" onclick="toggleFabric(this,${JSON.stringify(f.name)})">
+      <div class="fc-icon">${f.icon}</div>
+      <div class="fc-name">${esc(f.name)}</div>
+      <div class="fc-sub">${esc(f.sub)}</div>
+    </div>`
+  ).join('');
+
+  /* Apparel chips */
+  const apparelContainer = document.getElementById('apparel-chips');
+  apparelContainer.innerHTML = apparelTypes.map(a =>
+    `<button class="chip" onclick="toggleChip(this)">${esc(a)}</button>`
+  ).join('');
+
+  /* Booth fabric select options */
+  const fabricSelect = document.getElementById('b-fabric');
+  fabrics.forEach(f => {
+    const o = document.createElement('option');
+    o.value = f.name; o.textContent = f.name;
+    fabricSelect.appendChild(o);
+  });
+  fabricSelectExtras.forEach(name => {
+    const o = document.createElement('option');
+    o.value = name; o.textContent = name;
+    fabricSelect.appendChild(o);
+  });
+
+  /* Booth priority radios */
+  const priorityRow = document.getElementById('booth-priority-row');
+  priorityRow.innerHTML = priorities.map(p =>
+    `<div class="priority-opt">
+      <input type="radio" name="b-priority" id="bp-${p.value.toLowerCase()}" value="${esc(p.value)}"${p.default ? ' checked' : ''}>
+      <label for="bp-${p.value.toLowerCase()}" class="${esc(p.cssClass)}">${p.label}</label>
+    </div>`
+  ).join('');
+
+  /* Dashboard filter pills */
+  const filterRow = document.getElementById('dash-filters');
+  const staticFilters = [
+    { label: 'All', value: 'All', on: true },
+    ...fabrics.map(f => ({ label: f.name, value: f.name })),
+    { label: '🔥 Hot', value: 'Hot' },
+    { label: 'Booth', value: 'Booth' },
+    { label: 'Online', value: 'Online' },
+  ];
+  filterRow.innerHTML = staticFilters.map(f =>
+    `<button class="filter-pill${f.on ? ' on' : ''}" onclick="setFilter(${JSON.stringify(f.value)},this)">${f.label}</button>`
+  ).join('');
+}
+
+/* ════════════════════════════════════
    PERSIST
 ════════════════════════════════════ */
 function saveLeads() {
-  localStorage.setItem('nytg_leads', JSON.stringify(leads));
+  localStorage.setItem(EVENT_CONFIG.storageKey, JSON.stringify(leads));
   updateTopbarCount();
 }
 function updateTopbarCount() {
@@ -819,7 +885,7 @@ function goTo(id) {
 ════════════════════════════════════ */
 function checkPassword() {
   const val = document.getElementById('pw-input').value;
-  if (val === ADMIN_PASSWORD) {
+  if (val === EVENT_CONFIG.adminPassword) {
     unlocked = true;
     document.getElementById('pw-error').style.display = 'none';
     document.getElementById('pw-input').value = '';
@@ -847,15 +913,12 @@ function lockApp() {
    FORM INTERACTIONS
 ════════════════════════════════════ */
 function selectSource(el, name) {
-  document.querySelectorAll('.source-chip, #page-form .chip[data-source]').forEach(c => c.classList.remove('selected'));
-  // find among form chips
-  document.querySelectorAll('#page-form .chip').forEach(c => {
-    if (c.getAttribute('onclick') && c.getAttribute('onclick').includes(name)) c.classList.add('selected');
-  });
+  document.querySelectorAll('#source-chips .chip').forEach(c => c.classList.remove('selected'));
   el.classList.add('selected');
   selectedSource = name;
   const sp = document.getElementById('salesperson-field');
-  if (name === 'Bharat Tex booth') sp.classList.add('show');
+  const src = EVENT_CONFIG.sources.find(s => s.label === name);
+  if (src && src.showsSalesperson) sp.classList.add('show');
   else sp.classList.remove('show');
 }
 function toggleFabric(el, name) {
@@ -885,7 +948,8 @@ function submitPublicForm() {
   if (!selectedFabrics.length) { showToast('Please select at least one fabric interest.', 'error'); return; }
   if (!selectedSource) { showToast('Please select how you heard about us.', 'error'); return; }
 
-  const salesperson = selectedSource === 'Bharat Tex booth'
+  const src = EVENT_CONFIG.sources.find(s => s.label === selectedSource);
+  const salesperson = (src && src.showsSalesperson)
     ? document.getElementById('f-salesperson').value.trim() : '';
 
   const lead = makeLead({
@@ -896,7 +960,7 @@ function submitPublicForm() {
     msg: document.getElementById('f-msg').value.trim(),
     source: selectedSource,
     salesperson,
-    priority: 'Warm',
+    priority: EVENT_CONFIG.priorities.find(p => p.default)?.value || EVENT_CONFIG.priorities[0].value,
     note: ''
   });
   leads.push(lead);
@@ -935,7 +999,8 @@ function saveBoothLead() {
   if (!name) { showToast('Name is required.', 'error'); return; }
 
   const priorityEl = document.querySelector('input[name="b-priority"]:checked');
-  const priority = priorityEl ? priorityEl.value : 'Warm';
+  const defaultPriority = EVENT_CONFIG.priorities.find(p => p.default)?.value || EVENT_CONFIG.priorities[0].value;
+  const priority = priorityEl ? priorityEl.value : defaultPriority;
 
   leads.push(makeLead({
     name,
@@ -954,7 +1019,8 @@ function saveBoothLead() {
   ['b-name','b-company','b-email','b-country','b-sales','b-note']
     .forEach(id => document.getElementById(id).value = '');
   document.getElementById('b-fabric').value = '';
-  document.querySelector('input[name="b-priority"][value="Warm"]').checked = true;
+  const defaultRadio = document.querySelector(`input[name="b-priority"][value="${defaultPriority}"]`);
+  if (defaultRadio) defaultRadio.checked = true;
 
   boothFormOpen = false;
   document.getElementById('booth-form').style.display = 'none';
@@ -982,16 +1048,18 @@ function initials(name) {
 ════════════════════════════════════ */
 function renderDash() {
   document.getElementById('st-total').textContent = leads.length;
-  document.getElementById('st-hot').textContent = leads.filter(l=>l.priority==='Hot').length;
-  document.getElementById('st-warm').textContent = leads.filter(l=>l.priority==='Warm').length;
-  document.getElementById('st-cold').textContent = leads.filter(l=>l.priority==='Cold').length;
+  EVENT_CONFIG.priorities.forEach(p => {
+    const el = document.getElementById('st-' + p.value.toLowerCase());
+    if (el) el.textContent = leads.filter(l => l.priority === p.value).length;
+  });
   renderDashList();
 }
 function renderDashList() {
   const el = document.getElementById('dash-list');
+  const priorities = EVENT_CONFIG.priorities.map(p => p.value);
   const filtered = leads.filter(l => {
     if (activeFilter === 'All') return true;
-    if (['Hot','Warm','Cold'].includes(activeFilter)) return l.priority === activeFilter;
+    if (priorities.includes(activeFilter)) return l.priority === activeFilter;
     if (activeFilter === 'Booth') return l.source === 'Booth';
     if (activeFilter === 'Online') return l.source !== 'Booth';
     return l.fabric && l.fabric.includes(activeFilter);
@@ -1018,13 +1086,18 @@ function renderBoothList() {
 function leadHTML(l) {
   const fabrics = (l.fabric||'').split(', ').filter(Boolean);
   const fabricBadges = fabrics.map(f => {
-    const cls = f==='Elitech 360'?'badge-teal':f==='Dry-Tech'?'badge-blue':f==='Recycled Fabric'?'badge-amber':'badge-gray';
+    const cfg = EVENT_CONFIG.fabrics.find(x => x.name === f);
+    const cls = cfg ? cfg.badgeClass : 'badge-gray';
     return `<span class="badge ${cls}">${esc(f)}</span>`;
   }).join('');
-  const pClass = l.priority==='Hot'?'badge-red':l.priority==='Warm'?'badge-amber':'badge-blue';
-  const srcClass = l.source==='Booth'?'badge-purple':'badge-gray';
+  const pCfg = EVENT_CONFIG.priorities.find(p => p.value === l.priority);
+  const pClass = pCfg ? pCfg.badgeClass : 'badge-gray';
+  const srcClass = l.source === 'Booth' ? 'badge-purple' : 'badge-gray';
   const salesBadge = l.salesperson ? `<span class="badge badge-gray">👤 ${esc(l.salesperson)}</span>` : '';
   const appBadge = l.apparel ? `<span class="badge badge-gray">${esc(l.apparel.split(', ')[0])}${l.apparel.split(', ').length > 1 ? ' +' + (l.apparel.split(', ').length - 1) : ''}</span>` : '';
+  const priorityOptions = EVENT_CONFIG.priorities.map(p =>
+    `<option ${l.priority === p.value ? 'selected' : ''} value="${esc(p.value)}">${p.label}</option>`
+  ).join('');
   return `<div class="lead-card">
     <div class="lead-top">
       <div style="display:flex;gap:10px;align-items:flex-start;flex:1;min-width:0">
@@ -1035,9 +1108,7 @@ function leadHTML(l) {
         </div>
       </div>
       <select class="priority-select" onchange="updatePriority('${l.id}',this.value)">
-        <option ${l.priority==='Hot'?'selected':''} value="Hot">🔥 Hot</option>
-        <option ${l.priority==='Warm'?'selected':''} value="Warm">🌤 Warm</option>
-        <option ${l.priority==='Cold'?'selected':''} value="Cold">❄️ Cold</option>
+        ${priorityOptions}
       </select>
     </div>
     <div class="badges">
@@ -1099,7 +1170,7 @@ function exportCSV() {
   const csv = [headers.join(','), ...rows].join('\n');
   const a = document.createElement('a');
   a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-  a.download = 'NYTG_BharatTex_Leads_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.download = `${EVENT_CONFIG.orgName}_${EVENT_CONFIG.eventName.replace(/\s+/g,'')}_Leads_` + new Date().toISOString().slice(0,10) + '.csv';
   a.click();
   closeSidebar();
 }
@@ -1145,6 +1216,7 @@ document.addEventListener('keydown', e => {
 /* ════════════════════════════════════
    INIT
 ════════════════════════════════════ */
+initUI();
 updateTopbarCount();
 </script>
 </body>
