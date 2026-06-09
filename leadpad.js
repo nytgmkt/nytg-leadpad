@@ -1,38 +1,20 @@
 /* ════════════════════════════════════
-   EVENT CONFIG — edit this object to adapt the app to any event
+   EVENT CONFIG
 ════════════════════════════════════ */
 const EVENT_CONFIG = {
-  /* Branding */
   eventName:    'Bharat Tex 2026',
   orgName:      'NYTG',
   venueLine:    'Global Textile Expo · Hall 5',
-
-  /* Auth */
   adminPassword: 'nytg2026',
-
-  /* Storage */
   storageKey: 'nytg_leads',
-
-  /* Booth identifier shown in sidebar badge and booth form tag */
   boothId: 'NYTG-BT26',
-
-  /* Fabric products shown as selectable cards on the public form
-     and as options in the booth entry select.
-     badgeClass must match one of: badge-teal, badge-blue, badge-amber, badge-gray */
   fabrics: [
     { name: 'Elitech 360',    icon: '⚡',  sub: 'Stretch & durability',  badgeClass: 'badge-teal'  },
     { name: 'Dry-Tech',       icon: '💧',  sub: 'Moisture management',   badgeClass: 'badge-blue'  },
     { name: 'Recycled Fabric', icon: '♻️', sub: 'Circular fashion',      badgeClass: 'badge-amber' },
   ],
-
-  /* Extra option appended to the booth fabric select (not a card) */
   fabricSelectExtras: ['Multiple / TBD'],
-
-  /* Apparel-type chips on the public form */
   apparelTypes: ['Workwear', 'Uniform', 'Polo shirt', 'Activewear', 'Casualwear', 'Others'],
-
-  /* Lead-source chips on the public form.
-     Set showsSalesperson:true on whichever source should reveal the salesperson input. */
   sources: [
     { label: 'Facebook Ad' },
     { label: 'Instagram' },
@@ -40,19 +22,11 @@ const EVENT_CONFIG = {
     { label: 'Bharat Tex booth', showsSalesperson: true },
     { label: 'Other' },
   ],
-
-  /* Salesperson names shown in the dropdown on the public form.
-     Leave empty ([]) to show a plain text input instead. */
+  /* ใส่ชื่อทีมงานจริงที่นี่ เช่น ['Khun Nook', 'Khun Palm'] */
   salespeople: [],
-
-  /* Brevo transactional email — sent to the visitor on public form submit */
-  brevoApiKey: 'xkeysib-0b3074284f06c6eaedd8931f63a9805ead3089c21a507849d041bbd576075134-'
-    + '5RMik126ft05p0Jt',
+  /* Brevo — อัปเดต API key ใหม่ที่นี่ */
+  brevoApiKey: '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',
   brevoTemplateId: 2,
-
-  /* Priority levels used in booth entry form, lead cards, and dashboard stats.
-     cssClass must match one of: p-hot, p-warm, p-cold.
-     badgeClass must match one of: badge-red, badge-amber, badge-blue. */
   priorities: [
     { value: 'Hot',  label: '🔥 Hot',  cssClass: 'p-hot',  badgeClass: 'badge-red'   },
     { value: 'Warm', label: '🌤 Warm', cssClass: 'p-warm', badgeClass: 'badge-amber', default: true },
@@ -61,9 +35,29 @@ const EVENT_CONFIG = {
 };
 
 /* ════════════════════════════════════
+   FIREBASE SETUP
+════════════════════════════════════ */
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
+import { getDatabase, ref, push, onValue, update } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyC1uyUDUgwzlIWqqn6TG6-rcogsWVHs7jU",
+  authDomain: "nytg-leadpad.firebaseapp.com",
+  databaseURL: "https://nytg-leadpad-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "nytg-leadpad",
+  storageBucket: "nytg-leadpad.firebasestorage.app",
+  messagingSenderId: "658641774864",
+  appId: "1:658641774864:web:c66c544432260e8b5e5d95"
+};
+
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getDatabase(firebaseApp);
+const leadsRef = ref(db, EVENT_CONFIG.storageKey);
+
+/* ════════════════════════════════════
    STATE
 ════════════════════════════════════ */
-let leads = JSON.parse(localStorage.getItem(EVENT_CONFIG.storageKey) || '[]');
+let leads = [];
 let selectedFabrics = [];
 let selectedApparel = [];
 let selectedSource = '';
@@ -72,13 +66,29 @@ let boothFormOpen = false;
 let unlocked = false;
 
 /* ════════════════════════════════════
-   INIT — populate all config-driven UI
+   FIREBASE LISTENER
+════════════════════════════════════ */
+onValue(leadsRef, (snapshot) => {
+  leads = [];
+  if (snapshot.exists()) {
+    snapshot.forEach((child) => {
+      leads.push({ _key: child.key, ...child.val() });
+    });
+  }
+  updateTopbarCount();
+  if (unlocked) {
+    renderDash();
+    renderBoothList();
+  }
+});
+
+/* ════════════════════════════════════
+   INIT
 ════════════════════════════════════ */
 function initUI() {
   const { eventName, orgName, boothId, venueLine, fabrics, fabricSelectExtras,
           apparelTypes, sources, priorities } = EVENT_CONFIG;
 
-  /* Page title & sidebar brand */
   document.title = `${orgName} · ${eventName} — Lead App`;
   document.getElementById('sidebar-brand-title').textContent = `${orgName} · ${eventName}`;
   document.getElementById('sidebar-booth-badge-text').textContent = `Booth #${orgName}`;
@@ -88,40 +98,35 @@ function initUI() {
   /* Source chips */
   const sourceContainer = document.getElementById('source-chips');
   sourceContainer.innerHTML = sources.map(s =>
-    '<button class="chip" onclick="selectSource(this,' + JSON.stringify(s.label) + ')">' + esc(s.label) + '<\/button>'
+    '<button class="chip" onclick="selectSource(this,\'' + s.label.replace(/'/g,"\\'") + '\')">' + esc(s.label) + '<\/button>'
   ).join('');
 
-  /* Salesperson field — dropdown when salespeople list provided, else plain input */
+  /* Salesperson field — dropdown or plain input */
   const spField = document.getElementById('salesperson-field');
   if (EVENT_CONFIG.salespeople && EVENT_CONFIG.salespeople.length) {
     const opts = EVENT_CONFIG.salespeople
-      .map(s => '<option value="' + esc(s) + '">' + esc(s) + '<\/option>')
-      .join('');
+      .map(s => '<option value="' + esc(s) + '">' + esc(s) + '<\/option>').join('');
     spField.innerHTML =
       '<div class="field" style="margin-top:10px;margin-bottom:0">'
       + '<label>Sales person who assisted you<\/label>'
       + '<select id="f-salesperson-select" onchange="onSalespersonSelectChange(this)">'
-      + '<option value="">Select...<\/option>'
-      + opts
+      + '<option value="">Select...<\/option>' + opts
       + '<option value="__other__">Other...<\/option>'
-      + '<\/select>'
-      + '<\/div>'
+      + '<\/select><\/div>'
       + '<div class="field" id="salesperson-other-wrap" style="margin-top:8px;display:none;margin-bottom:0">'
       + '<label>Please specify<\/label>'
-      + '<input id="f-salesperson" placeholder="Enter name">'
-      + '<\/div>';
+      + '<input id="f-salesperson" placeholder="Enter name"><\/div>';
   } else {
     spField.innerHTML =
       '<div class="field" style="margin-top:10px;margin-bottom:0">'
       + '<label>Sales person who assisted you<\/label>'
-      + '<input id="f-salesperson" placeholder="e.g. Khun Nook">'
-      + '<\/div>';
+      + '<input id="f-salesperson" placeholder="e.g. Khun Nook"><\/div>';
   }
 
   /* Fabric cards */
   const fabricContainer = document.getElementById('fabric-cards');
   fabricContainer.innerHTML = fabrics.map(f =>
-    '<div class="fabric-card" onclick="toggleFabric(this,' + JSON.stringify(f.name) + ')">'
+    '<div class="fabric-card" onclick="toggleFabric(this,\'' + f.name.replace(/'/g,"\\'") + '\')">'
     + '<div class="fc-icon">' + f.icon + '<\/div>'
     + '<div class="fc-name">' + esc(f.name) + '<\/div>'
     + '<div class="fc-sub">' + esc(f.sub) + '<\/div>'
@@ -134,7 +139,7 @@ function initUI() {
     '<button class="chip" onclick="toggleChip(this)">' + esc(a) + '<\/button>'
   ).join('');
 
-  /* Booth fabric select options */
+  /* Booth fabric select */
   const fabricSelect = document.getElementById('b-fabric');
   fabrics.forEach(f => {
     const o = document.createElement('option');
@@ -171,11 +176,14 @@ function initUI() {
 }
 
 /* ════════════════════════════════════
-   PERSIST
+   FIREBASE PERSIST
 ════════════════════════════════════ */
-function saveLeads() {
-  localStorage.setItem(EVENT_CONFIG.storageKey, JSON.stringify(leads));
-  updateTopbarCount();
+async function saveLead(leadData) {
+  await push(leadsRef, leadData);
+}
+async function updateLeadField(key, fields) {
+  const itemRef = ref(db, EVENT_CONFIG.storageKey + '/' + key);
+  await update(itemRef, fields);
 }
 function updateTopbarCount() {
   const el = document.getElementById('topbar-leads');
@@ -195,8 +203,7 @@ function updateTopbarCount() {
 function toggleSidebar() {
   const s = document.getElementById('sidebar');
   const o = document.getElementById('sidebar-overlay');
-  const isOpen = s.classList.contains('open');
-  if (isOpen) closeSidebar();
+  if (s.classList.contains('open')) closeSidebar();
   else { s.classList.add('open'); o.classList.add('open'); }
 }
 function closeSidebar() {
@@ -207,12 +214,7 @@ function closeSidebar() {
 /* ════════════════════════════════════
    NAVIGATION
 ════════════════════════════════════ */
-const pageTitles = {
-  form: 'Share your fabric needs',
-  login: 'Team login',
-  dash: 'Lead dashboard',
-  booth: 'Booth entry',
-};
+const pageTitles = { form: 'Share your fabric needs', login: 'Team login', dash: 'Lead dashboard', booth: 'Booth entry' };
 function goTo(id) {
   closeSidebar();
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -266,14 +268,14 @@ function selectSource(el, name) {
   if (wasSelected) {
     selectedSource = '';
     sp.classList.remove('show');
-    otherField.classList.remove('show');
+    if (otherField) otherField.classList.remove('show');
     return;
   }
   el.classList.add('selected');
   selectedSource = name;
   const src = EVENT_CONFIG.sources.find(s => s.label === name);
   sp.classList.toggle('show', !!(src && src.showsSalesperson));
-  otherField.classList.toggle('show', name === 'Other');
+  if (otherField) otherField.classList.toggle('show', name === 'Other');
 }
 function onSalespersonSelectChange(sel) {
   const wrap = document.getElementById('salesperson-other-wrap');
@@ -308,7 +310,7 @@ function toggleChip(el) {
 /* ════════════════════════════════════
    PUBLIC FORM SUBMIT
 ════════════════════════════════════ */
-function submitPublicForm() {
+async function submitPublicForm() {
   const name = document.getElementById('f-name').value.trim();
   const email = document.getElementById('f-email').value.trim();
   const company = document.getElementById('f-company').value.trim();
@@ -321,21 +323,18 @@ function submitPublicForm() {
   const otherText = document.getElementById('f-source-other')?.value.trim() || '';
   const source = (selectedSource === 'Other' && otherText) ? otherText : selectedSource;
 
-  const lead = makeLead({
+  await saveLead(makeLead({
     name, email, company,
     country: document.getElementById('f-country').value.trim(),
     fabric: selectedFabrics.join(', '),
     apparel: selectedApparel.join(', '),
     msg: document.getElementById('f-msg').value.trim(),
-    source,
-    salesperson,
+    source, salesperson,
     priority: EVENT_CONFIG.priorities.find(p => p.default)?.value || EVENT_CONFIG.priorities[0].value,
     note: ''
-  });
-  leads.push(lead);
-  saveLeads();
-  sendBrevoEmail(name, email);
+  }));
 
+  sendBrevoEmail(name, email);
   document.getElementById('conf-email').textContent = email;
   document.getElementById('form-view').style.display = 'none';
   document.getElementById('success-view').style.display = 'block';
@@ -343,17 +342,18 @@ function submitPublicForm() {
 }
 
 function resetPublicForm() {
-  ['f-name','f-email','f-company','f-country','f-msg']
-    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  ['f-name','f-email','f-company','f-country','f-msg'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
   const sp = document.getElementById('f-salesperson'); if (sp) sp.value = '';
   const sel = document.getElementById('f-salesperson-select'); if (sel) sel.value = '';
   const wrap = document.getElementById('salesperson-other-wrap'); if (wrap) wrap.style.display = 'none';
   const so = document.getElementById('f-source-other'); if (so) so.value = '';
   selectedFabrics = []; selectedApparel = []; selectedSource = '';
-  document.querySelectorAll('#page-form .fabric-card, #page-form .chip')
-    .forEach(c => c.classList.remove('selected'));
+  document.querySelectorAll('#page-form .fabric-card, #page-form .chip').forEach(c => c.classList.remove('selected'));
   document.getElementById('salesperson-field').classList.remove('show');
-  document.getElementById('other-source-field').classList.remove('show');
+  const otherField = document.getElementById('other-source-field');
+  if (otherField) otherField.classList.remove('show');
   document.getElementById('form-view').style.display = 'block';
   document.getElementById('success-view').style.display = 'none';
   window.scrollTo(0, 0);
@@ -368,39 +368,31 @@ function toggleBoothForm() {
   document.getElementById('add-btn').style.display = boothFormOpen ? 'none' : 'flex';
   if (boothFormOpen) document.getElementById('b-name').focus();
 }
-
-function saveBoothLead() {
+async function saveBoothLead() {
   const name = document.getElementById('b-name').value.trim();
   if (!name) { showToast('Name is required.', 'error'); return; }
-
   const priorityEl = document.querySelector('input[name="b-priority"]:checked');
   const defaultPriority = EVENT_CONFIG.priorities.find(p => p.default)?.value || EVENT_CONFIG.priorities[0].value;
   const priority = priorityEl ? priorityEl.value : defaultPriority;
 
-  leads.push(makeLead({
+  await saveLead(makeLead({
     name,
     company: document.getElementById('b-company').value.trim(),
     email: document.getElementById('b-email').value.trim(),
     country: document.getElementById('b-country').value.trim(),
     fabric: document.getElementById('b-fabric').value,
-    apparel: '', msg: '',
-    source: 'Booth',
+    apparel: '', msg: '', source: 'Booth',
     salesperson: document.getElementById('b-sales').value.trim(),
-    priority,
-    note: document.getElementById('b-note').value.trim()
+    priority, note: document.getElementById('b-note').value.trim()
   }));
-  saveLeads();
 
-  ['b-name','b-company','b-email','b-country','b-sales','b-note']
-    .forEach(id => document.getElementById(id).value = '');
+  ['b-name','b-company','b-email','b-country','b-sales','b-note'].forEach(id => document.getElementById(id).value = '');
   document.getElementById('b-fabric').value = '';
   const defaultRadio = document.querySelector(`input[name="b-priority"][value="${defaultPriority}"]`);
   if (defaultRadio) defaultRadio.checked = true;
-
   boothFormOpen = false;
   document.getElementById('booth-form').style.display = 'none';
   document.getElementById('add-btn').style.display = 'flex';
-  renderBoothList();
   showToast('Contact saved!', 'success');
 }
 
@@ -410,10 +402,6 @@ function saveBoothLead() {
 function makeLead(data) {
   return { id: Date.now() + Math.random(), ...data, time: new Date().toLocaleString('en-GB') };
 }
-
-/* ════════════════════════════════════
-   INITIALS HELPER
-════════════════════════════════════ */
 function initials(name) {
   return (name || '?').split(' ').slice(0,2).map(w => w[0]).join('').toUpperCase();
 }
@@ -443,10 +431,6 @@ function renderDashList() {
     ? filtered.map(leadHTML).join('')
     : '<div class="empty"><span class="material-symbols-outlined">search_off<\/span>No leads match this filter.<\/div>';
 }
-
-/* ════════════════════════════════════
-   RENDER BOOTH LIST
-════════════════════════════════════ */
 function renderBoothList() {
   const el = document.getElementById('booth-list');
   const items = leads.filter(l => l.source === 'Booth').slice().reverse();
@@ -468,16 +452,14 @@ function leadHTML(l) {
   const pCfg = EVENT_CONFIG.priorities.find(p => p.value === l.priority);
   const pClass = pCfg ? pCfg.badgeClass : 'badge-gray';
   const srcClass = l.source === 'Booth' ? 'badge-purple' : 'badge-gray';
-  const salesBadge = l.salesperson
-    ? '<span class="badge badge-gray">👤 ' + esc(l.salesperson) + '<\/span>' : '';
+  const salesBadge = l.salesperson ? '<span class="badge badge-gray">👤 ' + esc(l.salesperson) + '<\/span>' : '';
   const appParts = l.apparel ? l.apparel.split(', ') : [];
-  const appBadge = appParts.length
-    ? '<span class="badge badge-gray">' + esc(appParts[0]) + (appParts.length > 1 ? ' +' + (appParts.length - 1) : '') + '<\/span>' : '';
+  const appBadge = appParts.length ? '<span class="badge badge-gray">' + esc(appParts[0]) + (appParts.length > 1 ? ' +' + (appParts.length-1) : '') + '<\/span>' : '';
   const priorityOptions = EVENT_CONFIG.priorities.map(p =>
     '<option ' + (l.priority === p.value ? 'selected' : '') + ' value="' + esc(p.value) + '">' + p.label + '<\/option>'
   ).join('');
-  const noteRow = l.note
-    ? '<div class="note-text"><span class="material-symbols-outlined" style="font-size:13px">edit_note<\/span>' + esc(l.note) + '<\/div>' : '';
+  const noteRow = l.note ? '<div class="note-text"><span class="material-symbols-outlined" style="font-size:13px">edit_note<\/span>' + esc(l.note) + '<\/div>' : '';
+  const key = l._key || l.id;
   return '<div class="lead-card">'
     + '<div class="lead-top">'
     +   '<div style="display:flex;gap:10px;align-items:flex-start;flex:1;min-width:0">'
@@ -487,20 +469,15 @@ function leadHTML(l) {
     +       '<div class="lead-sub">' + esc(l.company||'—') + (l.country ? ' \xB7 ' + esc(l.country) : '') + (l.email ? ' \xB7 ' + esc(l.email) : '') + '<\/div>'
     +     '<\/div>'
     +   '<\/div>'
-    +   '<select class="priority-select" onchange="updatePriority(\'' + l.id + '\',this.value)">'
+    +   '<select class="priority-select" onchange="updatePriority(\'' + key + '\',this.value)">'
     +     priorityOptions
     +   '<\/select>'
     + '<\/div>'
-    + '<div class="badges">'
-    +   fabricBadges + appBadge
-    +   '<span class="badge ' + srcClass + '">' + esc(l.source) + '<\/span>'
-    +   '<span class="badge ' + pClass + '">' + l.priority + '<\/span>'
-    +   salesBadge
-    + '<\/div>'
+    + '<div class="badges">' + fabricBadges + appBadge + '<span class="badge ' + srcClass + '">' + esc(l.source) + '<\/span><span class="badge ' + pClass + '">' + l.priority + '<\/span>' + salesBadge + '<\/div>'
     + noteRow
     + '<div class="note-area">'
-    +   '<input class="note-input" id="note-' + l.id + '" placeholder="Add note..." value="' + esc(l.note||'') + '">'
-    +   '<button class="btn-secondary" style="font-size:12px;padding:5px 12px;flex-shrink:0" onclick="saveNote(\'' + l.id + '\')">Save<\/button>'
+    +   '<input class="note-input" id="note-' + key + '" placeholder="Add note..." value="' + esc(l.note||'') + '">'
+    +   '<button class="btn-secondary" style="font-size:12px;padding:5px 12px;flex-shrink:0" onclick="saveNote(\'' + key + '\')">Save<\/button>'
     + '<\/div>'
     + '<div class="lead-time">' + l.time + '<\/div>'
     + '<\/div>';
@@ -516,17 +493,13 @@ function esc(s) {
 /* ════════════════════════════════════
    ACTIONS
 ════════════════════════════════════ */
-function updatePriority(id, val) {
-  const l = leads.find(x => String(x.id) === String(id));
-  if (l) { l.priority = val; saveLeads(); renderDash(); renderBoothList(); }
+async function updatePriority(key, val) {
+  await updateLeadField(key, { priority: val });
 }
-function saveNote(id) {
-  const l = leads.find(x => String(x.id) === String(id));
-  if (l) {
-    l.note = document.getElementById('note-' + id).value.trim();
-    saveLeads(); renderDash(); renderBoothList();
-    showToast('Note saved!', 'success');
-  }
+async function saveNote(key) {
+  const note = document.getElementById('note-' + key).value.trim();
+  await updateLeadField(key, { note });
+  showToast('Note saved!', 'success');
 }
 function setFilter(f, btn) {
   activeFilter = f;
@@ -555,39 +528,11 @@ function exportCSV() {
 }
 
 /* ════════════════════════════════════
-   TOAST NOTIFICATION
-════════════════════════════════════ */
-let toastTimeout;
-function showToast(msg, type = 'success') {
-  let toast = document.getElementById('toast');
-  if (!toast) {
-    toast = document.createElement('div');
-    toast.id = 'toast';
-    toast.style.cssText = `
-      position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);
-      padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;
-      box-shadow:0 4px 16px rgba(0,0,0,.15);z-index:9999;transition:transform .25s ease;
-      white-space:nowrap;pointer-events:none;
-    `;
-    document.body.appendChild(toast);
-  }
-  toast.textContent = msg;
-  toast.style.background = type === 'error' ? '#E24B4A' : '#1D9E75';
-  toast.style.color = '#fff';
-  clearTimeout(toastTimeout);
-  requestAnimationFrame(() => {
-    toast.style.transform = 'translateX(-50%) translateY(0)';
-  });
-  toastTimeout = setTimeout(() => {
-    toast.style.transform = 'translateX(-50%) translateY(100px)';
-  }, 2500);
-}
-
-/* ════════════════════════════════════
    BREVO EMAIL
 ════════════════════════════════════ */
 async function sendBrevoEmail(name, email) {
   const { brevoApiKey, brevoTemplateId, eventName } = EVENT_CONFIG;
+  if (!brevoApiKey) return;
   try {
     await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
@@ -598,7 +543,27 @@ async function sendBrevoEmail(name, email) {
         params: { NAME: name, EVENT_NAME: eventName },
       }),
     });
-  } catch (_) { /* fire-and-forget — network failure should not block the form */ }
+  } catch (_) { /* fire-and-forget */ }
+}
+
+/* ════════════════════════════════════
+   TOAST
+════════════════════════════════════ */
+let toastTimeout;
+function showToast(msg, type = 'success') {
+  let toast = document.getElementById('toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'toast';
+    toast.style.cssText = `position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.15);z-index:9999;transition:transform .25s ease;white-space:nowrap;pointer-events:none;`;
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.background = type === 'error' ? '#E24B4A' : '#1D9E75';
+  toast.style.color = '#fff';
+  clearTimeout(toastTimeout);
+  requestAnimationFrame(() => { toast.style.transform = 'translateX(-50%) translateY(0)'; });
+  toastTimeout = setTimeout(() => { toast.style.transform = 'translateX(-50%) translateY(100px)'; }, 2500);
 }
 
 /* ════════════════════════════════════
@@ -609,6 +574,27 @@ document.addEventListener('keydown', e => {
   if (unlocked && e.key === 'b' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); goTo('booth'); }
   if (unlocked && e.key === 'd' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); goTo('dash'); }
 });
+
+/* ════════════════════════════════════
+   EXPOSE GLOBALS (required for type="module")
+════════════════════════════════════ */
+window.selectSource = selectSource;
+window.toggleFabric = toggleFabric;
+window.toggleChip = toggleChip;
+window.onSalespersonSelectChange = onSalespersonSelectChange;
+window.submitPublicForm = submitPublicForm;
+window.resetPublicForm = resetPublicForm;
+window.toggleBoothForm = toggleBoothForm;
+window.saveBoothLead = saveBoothLead;
+window.checkPassword = checkPassword;
+window.lockApp = lockApp;
+window.goTo = goTo;
+window.toggleSidebar = toggleSidebar;
+window.closeSidebar = closeSidebar;
+window.exportCSV = exportCSV;
+window.updatePriority = updatePriority;
+window.saveNote = saveNote;
+window.setFilter = setFilter;
 
 /* ════════════════════════════════════
    INIT
