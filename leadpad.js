@@ -47,7 +47,7 @@ const EVENT_CONFIG = {
 
   /* Brevo transactional email — sent to the visitor on public form submit */
   brevoApiKey: 'xkeysib-0b3074284f06c6eaedd8931f63a9805ead3089c21a507849d041bbd576075134-'
-    + '4GOl1bOKl7GbSlIn',
+    + '5RMik126ft05p0Jt',
   brevoTemplateId: 2,
 
   /* Priority levels used in booth entry form, lead cards, and dashboard stats.
