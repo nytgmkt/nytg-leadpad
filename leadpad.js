@@ -41,6 +41,15 @@ const EVENT_CONFIG = {
     { label: 'Other' },
   ],
 
+  /* Salesperson names shown in the dropdown on the public form.
+     Leave empty ([]) to show a plain text input instead. */
+  salespeople: [],
+
+  /* Brevo transactional email — sent to the visitor on public form submit */
+  brevoApiKey: 'xkeysib-0b3074284f06c6eaedd8931f63a9805ead3089c21a507849d041bbd576075134-'
+    + '4GOl1bOKl7GbSlIn',
+  brevoTemplateId: 2,
+
   /* Priority levels used in booth entry form, lead cards, and dashboard stats.
      cssClass must match one of: p-hot, p-warm, p-cold.
      badgeClass must match one of: badge-red, badge-amber, badge-blue. */
@@ -81,6 +90,33 @@ function initUI() {
   sourceContainer.innerHTML = sources.map(s =>
     '<button class="chip" onclick="selectSource(this,' + JSON.stringify(s.label) + ')">' + esc(s.label) + '<\/button>'
   ).join('');
+
+  /* Salesperson field — dropdown when salespeople list provided, else plain input */
+  const spField = document.getElementById('salesperson-field');
+  if (EVENT_CONFIG.salespeople && EVENT_CONFIG.salespeople.length) {
+    const opts = EVENT_CONFIG.salespeople
+      .map(s => '<option value="' + esc(s) + '">' + esc(s) + '<\/option>')
+      .join('');
+    spField.innerHTML =
+      '<div class="field" style="margin-top:10px;margin-bottom:0">'
+      + '<label>Sales person who assisted you<\/label>'
+      + '<select id="f-salesperson-select" onchange="onSalespersonSelectChange(this)">'
+      + '<option value="">Select...<\/option>'
+      + opts
+      + '<option value="__other__">Other...<\/option>'
+      + '<\/select>'
+      + '<\/div>'
+      + '<div class="field" id="salesperson-other-wrap" style="margin-top:8px;display:none;margin-bottom:0">'
+      + '<label>Please specify<\/label>'
+      + '<input id="f-salesperson" placeholder="Enter name">'
+      + '<\/div>';
+  } else {
+    spField.innerHTML =
+      '<div class="field" style="margin-top:10px;margin-bottom:0">'
+      + '<label>Sales person who assisted you<\/label>'
+      + '<input id="f-salesperson" placeholder="e.g. Khun Nook">'
+      + '<\/div>';
+  }
 
   /* Fabric cards */
   const fabricContainer = document.getElementById('fabric-cards');
@@ -144,7 +180,8 @@ function saveLeads() {
 function updateTopbarCount() {
   const el = document.getElementById('topbar-leads');
   const cnt = document.getElementById('topbar-leads-count');
-  if (unlocked) {
+  const onForm = document.getElementById('page-form')?.classList.contains('active');
+  if (unlocked && !onForm) {
     el.style.display = 'flex';
     cnt.textContent = leads.length;
   } else {
@@ -186,6 +223,7 @@ function goTo(id) {
   document.getElementById('topbar-title').textContent = pageTitles[id] || '';
   if (id === 'dash') renderDash();
   if (id === 'booth') renderBoothList();
+  updateTopbarCount();
 }
 
 /* ════════════════════════════════════
@@ -221,13 +259,35 @@ function lockApp() {
    FORM INTERACTIONS
 ════════════════════════════════════ */
 function selectSource(el, name) {
+  const wasSelected = el.classList.contains('selected');
   document.querySelectorAll('#source-chips .chip').forEach(c => c.classList.remove('selected'));
+  const sp = document.getElementById('salesperson-field');
+  const otherField = document.getElementById('other-source-field');
+  if (wasSelected) {
+    selectedSource = '';
+    sp.classList.remove('show');
+    otherField.classList.remove('show');
+    return;
+  }
   el.classList.add('selected');
   selectedSource = name;
-  const sp = document.getElementById('salesperson-field');
   const src = EVENT_CONFIG.sources.find(s => s.label === name);
-  if (src && src.showsSalesperson) sp.classList.add('show');
-  else sp.classList.remove('show');
+  sp.classList.toggle('show', !!(src && src.showsSalesperson));
+  otherField.classList.toggle('show', name === 'Other');
+}
+function onSalespersonSelectChange(sel) {
+  const wrap = document.getElementById('salesperson-other-wrap');
+  if (wrap) wrap.style.display = sel.value === '__other__' ? 'block' : 'none';
+  const inp = document.getElementById('f-salesperson');
+  if (inp && sel.value !== '__other__') inp.value = '';
+}
+function getSalesperson() {
+  const sel = document.getElementById('f-salesperson-select');
+  if (sel) {
+    if (sel.value === '__other__') return (document.getElementById('f-salesperson')?.value || '').trim();
+    return sel.value;
+  }
+  return (document.getElementById('f-salesperson')?.value || '').trim();
 }
 function toggleFabric(el, name) {
   const i = selectedFabrics.indexOf(name);
@@ -257,8 +317,9 @@ function submitPublicForm() {
   if (!selectedSource) { showToast('Please select how you heard about us.', 'error'); return; }
 
   const src = EVENT_CONFIG.sources.find(s => s.label === selectedSource);
-  const salesperson = (src && src.showsSalesperson)
-    ? document.getElementById('f-salesperson').value.trim() : '';
+  const salesperson = (src && src.showsSalesperson) ? getSalesperson() : '';
+  const otherText = document.getElementById('f-source-other')?.value.trim() || '';
+  const source = (selectedSource === 'Other' && otherText) ? otherText : selectedSource;
 
   const lead = makeLead({
     name, email, company,
@@ -266,13 +327,14 @@ function submitPublicForm() {
     fabric: selectedFabrics.join(', '),
     apparel: selectedApparel.join(', '),
     msg: document.getElementById('f-msg').value.trim(),
-    source: selectedSource,
+    source,
     salesperson,
     priority: EVENT_CONFIG.priorities.find(p => p.default)?.value || EVENT_CONFIG.priorities[0].value,
     note: ''
   });
   leads.push(lead);
   saveLeads();
+  sendBrevoEmail(name, email);
 
   document.getElementById('conf-email').textContent = email;
   document.getElementById('form-view').style.display = 'none';
@@ -281,12 +343,17 @@ function submitPublicForm() {
 }
 
 function resetPublicForm() {
-  ['f-name','f-email','f-company','f-country','f-msg','f-salesperson']
-    .forEach(id => document.getElementById(id).value = '');
+  ['f-name','f-email','f-company','f-country','f-msg']
+    .forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+  const sp = document.getElementById('f-salesperson'); if (sp) sp.value = '';
+  const sel = document.getElementById('f-salesperson-select'); if (sel) sel.value = '';
+  const wrap = document.getElementById('salesperson-other-wrap'); if (wrap) wrap.style.display = 'none';
+  const so = document.getElementById('f-source-other'); if (so) so.value = '';
   selectedFabrics = []; selectedApparel = []; selectedSource = '';
   document.querySelectorAll('#page-form .fabric-card, #page-form .chip')
     .forEach(c => c.classList.remove('selected'));
   document.getElementById('salesperson-field').classList.remove('show');
+  document.getElementById('other-source-field').classList.remove('show');
   document.getElementById('form-view').style.display = 'block';
   document.getElementById('success-view').style.display = 'none';
   window.scrollTo(0, 0);
@@ -514,6 +581,24 @@ function showToast(msg, type = 'success') {
   toastTimeout = setTimeout(() => {
     toast.style.transform = 'translateX(-50%) translateY(100px)';
   }, 2500);
+}
+
+/* ════════════════════════════════════
+   BREVO EMAIL
+════════════════════════════════════ */
+async function sendBrevoEmail(name, email) {
+  const { brevoApiKey, brevoTemplateId, eventName } = EVENT_CONFIG;
+  try {
+    await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: { 'api-key': brevoApiKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to: [{ email, name }],
+        templateId: brevoTemplateId,
+        params: { NAME: name, EVENT_NAME: eventName },
+      }),
+    });
+  } catch (_) { /* fire-and-forget — network failure should not block the form */ }
 }
 
 /* ════════════════════════════════════
