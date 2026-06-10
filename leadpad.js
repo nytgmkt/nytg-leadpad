@@ -521,7 +521,7 @@ function exportCSV() {
   );
   const csv = [headers.join(','), ...rows].join('\n');
   const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
   a.download = `${EVENT_CONFIG.orgName}_${EVENT_CONFIG.eventName.replace(/\s+/g,'')}_Leads_` + new Date().toISOString().slice(0,10) + '.csv';
   a.click();
   closeSidebar();
