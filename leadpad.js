@@ -1,408 +1,1160 @@
-<!DOCTYPE html>
-<html lang="en" class="light">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title id="page-title">LeadPad</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
-<style>
-/* ── Reset & Tokens ── */
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --primary:#004AC6;--primary-dk:#003A9E;--primary-lt:#EEF2FF;--primary-mid:rgba(0,74,198,.12);
-  --teal:#1D9E75;--teal-dk:#17866A;--teal-lt:#ECFDF5;
-  --hot:#DC2626;--warm:#D97706;--cold:#2563EB;
-  --ink:#111827;--muted:#6B7280;--border:#E5E8EE;
-  --surface:#FFFFFF;--surface2:#F8FAFC;--bg:#F2F5F9;
-  --shadow-sm:0 1px 3px rgba(0,0,0,.08);
-  --shadow-md:0 4px 16px rgba(0,0,0,.10);
-  --radius:8px;--radius-lg:12px;--radius-xl:16px;
-  --sidebar-w:260px;
-}
-body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;overflow-x:hidden}
-.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;vertical-align:middle;line-height:1}
+/* ════════════════════════════════════
+   FIREBASE SETUP
+════════════════════════════════════ */
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
+import { getDatabase, ref, push, get, onValue, update, set } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js';
 
-/* ── App Shell ── */
-.app{display:flex;min-height:100vh}
-.main{flex:1;display:flex;flex-direction:column;min-width:0}
+const firebaseConfig = {
+  apiKey: "AIzaSyC1uyUDUgwzlIWqqn6TG6-rcogsWVHs7jU",
+  authDomain: "nytg-leadpad.firebaseapp.com",
+  databaseURL: "https://nytg-leadpad-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "nytg-leadpad",
+  storageBucket: "nytg-leadpad.firebasestorage.app",
+  messagingSenderId: "658641774864",
+  appId: "1:658641774864:web:c66c544432260e8b5e5d95"
+};
 
-/* ── Sidebar ── */
-.sidebar{
-  width:var(--sidebar-w);flex-shrink:0;
-  background:var(--surface);border-right:1px solid var(--border);
-  display:flex;flex-direction:column;
-  position:fixed;top:0;left:0;height:100vh;z-index:200;
-  transition:transform .25s ease;
-}
-.sidebar-brand{padding:20px 20px 16px;border-bottom:1px solid var(--border)}
-.sidebar-brand-title{font-size:15px;font-weight:700;color:var(--primary);letter-spacing:-.01em}
-.sidebar-brand-sub{font-size:11px;color:var(--muted);margin-top:2px;font-family:'DM Mono',monospace}
-.sidebar-booth-badge{
-  margin:10px 12px;padding:10px 12px;border-radius:var(--radius-lg);
-  background:var(--teal-lt);border:1px solid rgba(29,158,117,.2);
-  display:flex;align-items:center;gap:8px;
-}
-.sidebar-booth-badge .material-symbols-outlined{font-size:18px;color:var(--teal)}
-.sidebar-booth-badge-text{font-size:12px;font-weight:600;color:var(--teal-dk)}
-.sidebar-booth-badge-dot{width:6px;height:6px;border-radius:50%;background:#22C55E;margin-left:auto;flex-shrink:0;box-shadow:0 0 0 2px rgba(34,197,94,.25)}
-.sidebar-section-label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;padding:10px 16px 4px}
-.sidebar-nav{flex:1;padding:0 8px;overflow-y:auto}
-.nav-item{
-  width:100%;text-align:left;
-  display:flex;align-items:center;gap:10px;padding:9px 12px;
-  border-radius:var(--radius);border:none;background:none;cursor:pointer;
-  font-size:14px;font-weight:500;color:var(--ink);transition:background .15s;
-}
-.nav-item:hover{background:var(--surface2)}
-.nav-item.active{background:var(--primary-lt);color:var(--primary)}
-.nav-item .material-symbols-outlined{font-size:18px}
-.nav-divider{height:1px;background:var(--border);margin:6px 8px}
-.sidebar-footer{padding:16px 20px;border-top:1px solid var(--border)}
-.sidebar-footer-text{font-size:11px;color:var(--muted)}
-.sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:199;opacity:0;pointer-events:none;transition:opacity .25s}
-.sidebar-overlay.open{opacity:1;pointer-events:all}
+const firebaseApp = initializeApp(firebaseConfig);
+const db = getDatabase(firebaseApp);
 
-/* ── Topbar ── */
-.topbar{
-  position:sticky;top:0;z-index:100;
-  height:56px;display:flex;align-items:center;gap:12px;padding:0 20px;
-  background:var(--surface);border-bottom:1px solid var(--border);
-}
-.topbar-hamburger{
-  display:none;width:36px;height:36px;border:1px solid var(--border);
-  border-radius:var(--radius);background:var(--surface2);cursor:pointer;
-  align-items:center;justify-content:center;flex-shrink:0;
-}
-.topbar-title{font-size:16px;font-weight:700;flex:1;letter-spacing:-.01em}
-.topbar-right{display:flex;align-items:center;gap:8px}
-.topbar-stat-pill{
-  display:flex;align-items:center;gap:6px;
-  padding:5px 12px;background:var(--primary-lt);border-radius:20px;
-  font-size:13px;font-weight:600;color:var(--primary);
-}
-.topbar-stat-pill .material-symbols-outlined{font-size:16px}
-.topbar-role-badge{
-  padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;
-  letter-spacing:.04em;text-transform:uppercase;
-}
-.role-admin{background:#FEF3C7;color:#92400E}
-.role-creator{background:var(--primary-lt);color:var(--primary)}
-.role-user{background:var(--teal-lt);color:var(--teal-dk)}
+/* ════════════════════════════════════
+   DEFAULT PROJECT CONFIG (Bharat Tex 2026)
+   Used as seed if Firebase has no data
+════════════════════════════════════ */
+const BHARATTEX_DEFAULT = {
+  eventName: 'Bharat Tex 2026',
+  orgName: 'NYTG',
+  venueLine: 'Global Textile Expo · Hall 5',
+  boothId: 'NYTG-BT26',
+  adminPassword: 'nytg2026',
+  creatorPassword: 'nytgteam',
+  fabrics: [
+    { name: 'Elitech 360',     icon: '⚡', sub: 'Stretch & durability',  badgeClass: 'badge-teal'  },
+    { name: 'Dry-Tech',        icon: '💧', sub: 'Moisture management',   badgeClass: 'badge-blue'  },
+    { name: 'Recycled Fabric', icon: '♻️', sub: 'Circular fashion',      badgeClass: 'badge-amber' },
+  ],
+  fabricSelectExtras: ['Multiple / TBD'],
+  apparelTypes: ['Workwear','Uniform','Polo shirt','Activewear','Casualwear','Others'],
+  sources: [
+    { label: 'Facebook Ad' },
+    { label: 'Instagram' },
+    { label: 'LinkedIn' },
+    { label: 'Bharat Tex booth', showsSalesperson: true },
+    { label: 'Other' },
+  ],
+  salespeople: [],
+  brevoApiKey: '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',
+  brevoTemplateId: 2,
+  priorities: [
+    { value: 'Hot',  label: '🔥 Hot',  cssClass: 'p-hot',  badgeClass: 'badge-red'   },
+    { value: 'Warm', label: '🌤 Warm', cssClass: 'p-warm', badgeClass: 'badge-amber', default: true },
+    { value: 'Cold', label: '❄️ Cold', cssClass: 'p-cold', badgeClass: 'badge-blue'  },
+  ],
+};
 
-/* ── Page Content ── */
-.page-content{flex:1;padding:20px;max-width:1200px;width:100%;margin:0 auto;}
-.page{display:none}
-.page.active{display:block}
+/* ════════════════════════════════════
+   SESSION STATE
+════════════════════════════════════ */
+const SESSION_KEY = 'nytg_lp_session';
 
-/* ── Cards ── */
-.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:20px;margin-bottom:16px}
-.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
-.card-header h4{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;color:var(--ink)}
-.card-header h4 .material-symbols-outlined{font-size:18px;color:var(--primary)}
-.card-tag{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--surface2);border:1px solid var(--border);padding:3px 8px;border-radius:20px}
+let session = loadSession();   // { role: 'admin'|'creator'|null, projectKey: string|null }
+let currentProject = null;     // active project config from Firebase
+let leads = [];                // active project leads
+let leadsListener = null;      // Firebase onValue unsubscribe
 
-/* ── Forms ── */
-.field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
-.field label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
-input,select,textarea{
-  width:100%;padding:9px 12px;
-  border:1.5px solid var(--border);border-radius:var(--radius);
-  font-family:'DM Sans',sans-serif;font-size:14px;background:var(--surface);
-  color:var(--ink);outline:none;transition:border-color .15s,box-shadow .15s;
+// Form state (public form)
+let selectedFabrics = [];
+let selectedApparel = [];
+let selectedSource = '';
+
+// Filter state
+let activeFilter = 'All';
+
+// Booth state
+let boothFormOpen = false;
+
+function loadSession() {
+  try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)) || { role: null, projectKey: null }; }
+  catch { return { role: null, projectKey: null }; }
 }
-input:focus,select:focus,textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-mid)}
-textarea{resize:vertical;min-height:80px}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
-
-/* ── Chips ── */
-.chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
-.chip{
-  padding:5px 14px;border:1.5px solid var(--border);border-radius:20px;
-  background:var(--surface);cursor:pointer;font-size:13px;font-weight:500;
-  color:var(--ink);transition:all .15s;
+function saveSession() {
+  sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
 }
-.chip:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-lt)}
-.chip.selected{border-color:var(--primary);background:var(--primary);color:#fff}
 
-/* ── Fabric Cards ── */
-.fabric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:6px}
-.fabric-card{
-  border:1.5px solid var(--border);border-radius:var(--radius-lg);
-  padding:14px 10px;text-align:center;cursor:pointer;
-  transition:all .15s;background:var(--surface);
-}
-.fabric-card:hover{border-color:var(--primary);box-shadow:var(--shadow-sm)}
-.fabric-card.selected{border-color:var(--primary);background:var(--primary-lt)}
-.fc-icon{font-size:24px;margin-bottom:6px}
-.fc-name{font-size:13px;font-weight:700;color:var(--ink)}
-.fc-sub{font-size:11px;color:var(--muted);margin-top:2px}
+/* ════════════════════════════════════
+   HASH ROUTER
+   /#/                → home (role selector)
+   /#/login           → login page
+   /#/hub             → hub (all projects) — Admin/Creator only
+   /#/{key}           → public form for project
+   /#/{key}/dash      → dashboard
+   /#/{key}/booth     → booth entry
+   /#/{key}/settings  → settings (Admin only) — Sprint 3
+════════════════════════════════════ */
+async function route() {
+  const hash = location.hash.replace(/^#\/?/, '');
+  const parts = hash.split('/').filter(Boolean);
 
-/* ── Priority Radios ── */
-.priority-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
-.priority-opt{position:relative}
-.priority-opt input{position:absolute;opacity:0;width:0;height:0}
-.priority-opt label{
-  display:block;cursor:pointer;
-  padding:8px 6px;border:1.5px solid var(--border);border-radius:var(--radius);
-  font-size:12px;font-weight:600;text-align:center;min-width:64px;
-  transition:all .15s;white-space:nowrap;
-}
-.priority-opt input:checked+label.p-hot{border-color:var(--hot);background:#FEF2F2;color:var(--hot)}
-.priority-opt input:checked+label.p-warm{border-color:var(--warm);background:#FFFBEB;color:var(--warm)}
-.priority-opt input:checked+label.p-cold{border-color:var(--cold);background:#EFF6FF;color:var(--cold)}
+  // /#/ or empty → Home
+  if (parts.length === 0) {
+    await renderHome();
+    return;
+  }
 
-/* ── Buttons ── */
-.btn-primary{
-  width:100%;padding:11px 20px;background:var(--primary);
-  color:#fff;border:none;border-radius:var(--radius);cursor:pointer;
-  font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;
-  display:flex;align-items:center;justify-content:center;gap:8px;
-  transition:background .15s;margin-top:8px;
-}
-.btn-primary:hover{background:var(--primary-dk)}
-.btn-teal{background:var(--teal)}
-.btn-teal:hover{background:var(--teal-dk)}
-.btn-secondary{
-  padding:8px 16px;border:1.5px solid var(--border);border-radius:var(--radius);
-  background:var(--surface);cursor:pointer;font-family:'DM Sans',sans-serif;
-  font-size:13px;font-weight:600;color:var(--ink);display:inline-flex;
-  align-items:center;gap:6px;transition:all .15s;
-}
-.btn-secondary:hover{border-color:var(--primary);color:var(--primary)}
-.btn-ghost{
-  padding:8px 16px;border:none;border-radius:var(--radius);
-  background:transparent;cursor:pointer;font-family:'DM Sans',sans-serif;
-  font-size:13px;font-weight:600;color:var(--muted);transition:color .15s;
-}
-.btn-ghost:hover{color:var(--ink)}
+  // /#/login
+  if (parts[0] === 'login') {
+    await renderLogin();
+    return;
+  }
 
-/* ── Dashboard ── */
-.section-head{margin-bottom:20px}
-.section-head h2{font-size:22px;font-weight:800;letter-spacing:-.02em}
-.section-head p{color:var(--muted);font-size:14px;margin-top:4px}
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
-.stat-card{
-  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
-  padding:16px;text-align:center;
+  // /#/hub
+  if (parts[0] === 'hub') {
+    if (!session.role) { goHome(); return; }
+    await renderHub();
+    return;
+  }
+
+  // /#/{key}  or  /#/{key}/dash  etc.
+  const eventKey = parts[0];
+  const sub = parts[1] || '';
+
+  // Load project config (and cache it)
+  const cfg = await loadProjectConfig(eventKey);
+  if (!cfg) {
+    renderError(`Project "${eventKey}" not found.`);
+    return;
+  }
+  currentProject = { key: eventKey, ...cfg };
+  updateSidebarForProject();
+
+  if (!sub) {
+    await renderPublicForm();
+  } else if (sub === 'dash') {
+    if (!session.role) { navigate(`/${eventKey}`); return; }
+    await renderDashPage();
+  } else if (sub === 'booth') {
+    if (!session.role) { navigate(`/${eventKey}`); return; }
+    await renderBoothPage();
+  } else if (sub === 'settings') {
+    if (session.role !== 'admin') { navigate(`/${eventKey}/dash`); return; }
+    renderPage('Settings coming in Sprint 3 🚧', 'Settings');
+  } else {
+    renderError('Page not found.');
+  }
 }
-.stat-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
-.stat-val{font-size:28px;font-weight:800;color:var(--ink);letter-spacing:-.02em}
-.filter-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
-.filter-pill{
-  padding:4px 13px;border:1.5px solid var(--border);border-radius:20px;
-  background:var(--surface);cursor:pointer;font-size:12px;font-weight:600;
-  color:var(--muted);transition:all .15s;
+
+/* ════════════════════════════════════
+   FIREBASE PROJECT HELPERS
+════════════════════════════════════ */
+async function loadProjectConfig(key) {
+  const snap = await get(ref(db, `projects/${key}/config`));
+  if (snap.exists()) return snap.val();
+
+  // Auto-seed Bharat Tex if first run
+  if (key === 'bharattex2026') {
+    await set(ref(db, `projects/bharattex2026/config`), BHARATTEX_DEFAULT);
+    return BHARATTEX_DEFAULT;
+  }
+  return null;
 }
-.filter-pill:hover,.filter-pill.on{border-color:var(--primary);background:var(--primary-lt);color:var(--primary)}
-.lead-list{display:flex;flex-direction:column;gap:10px}
-.lead-card{
-  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
-  padding:14px 16px;
+
+async function loadAllProjects() {
+  const snap = await get(ref(db, 'projects'));
+  if (!snap.exists()) return [];
+  const projects = [];
+  snap.forEach(child => {
+    const cfg = child.val().config || {};
+    const leadsObj = child.val().leads || {};
+    projects.push({
+      key: child.key,
+      eventName: cfg.eventName || child.key,
+      orgName: cfg.orgName || '',
+      venueLine: cfg.venueLine || '',
+      leadCount: Object.keys(leadsObj).length,
+    });
+  });
+  return projects;
 }
-.lead-top{display:flex;align-items:flex-start;gap:12px;margin-bottom:10px}
-.lead-avatar{
-  width:36px;height:36px;border-radius:50%;
-  background:var(--primary-lt);color:var(--primary);
-  font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;
+
+function subscribeLeads(key) {
+  if (leadsListener) leadsListener();  // unsubscribe previous
+  const leadsRef = ref(db, `projects/${key}/leads`);
+  leadsListener = onValue(leadsRef, (snap) => {
+    leads = [];
+    if (snap.exists()) {
+      snap.forEach(child => leads.push({ _key: child.key, ...child.val() }));
+    }
+    updateTopbarCount();
+    // Re-render active view if on dash or booth
+    const hash = location.hash;
+    if (hash.includes('/dash')) renderDashList();
+    if (hash.includes('/booth')) renderBoothList();
+  });
 }
-.lead-info{flex:1;min-width:0}
-.lead-name{font-size:14px;font-weight:700}
-.lead-sub{font-size:12px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.priority-select{
-  border:1.5px solid var(--border);border-radius:var(--radius);
-  padding:4px 8px;font-size:12px;font-weight:600;cursor:pointer;background:var(--surface);
+
+async function saveLeadToProject(key, leadData) {
+  await push(ref(db, `projects/${key}/leads`), leadData);
 }
-.badges{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
-.badge{padding:2px 9px;border-radius:20px;font-size:11px;font-weight:600}
-.badge-teal{background:#ECFDF5;color:#065F46}
-.badge-blue{background:#EFF6FF;color:#1D4ED8}
-.badge-amber{background:#FFFBEB;color:#92400E}
-.badge-red{background:#FEF2F2;color:#991B1B}
-.badge-purple{background:#F5F3FF;color:#5B21B6}
-.badge-gray{background:var(--surface2);color:var(--muted);border:1px solid var(--border)}
-.note-area{display:flex;gap:8px;margin-top:8px}
-.note-input{flex:1;padding:6px 10px;border:1.5px solid var(--border);border-radius:var(--radius);font-size:13px}
-.note-text{font-size:12px;color:var(--muted);margin-bottom:4px;display:flex;align-items:center;gap:4px}
-.lead-time{font-size:11px;color:var(--muted);margin-top:8px;font-family:'DM Mono',monospace}
-.empty{text-align:center;padding:40px 20px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:8px}
-.empty .material-symbols-outlined{font-size:36px;opacity:.4}
-
-/* ── Salesperson toggle ── */
-.salesperson-field{display:none}
-.salesperson-field.show{display:block}
-
-/* ── Hero Banner ── */
-.hero-banner{
-  position:relative;border-radius:var(--radius-xl);overflow:hidden;
-  background:linear-gradient(135deg,var(--primary) 0%,#1E40AF 100%);
-  padding:32px 24px;margin-bottom:16px;color:#fff;
+async function updateLeadInProject(key, leadKey, fields) {
+  await update(ref(db, `projects/${key}/leads/${leadKey}`), fields);
 }
-.hero-banner-overlay{
-  position:absolute;inset:0;
-  background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+
+/* ════════════════════════════════════
+   NAVIGATION HELPERS
+════════════════════════════════════ */
+function navigate(path) {
+  location.hash = '/' + path.replace(/^\//, '');
 }
-.hero-banner-content{position:relative}
-.hero-banner-content h3{font-size:22px;font-weight:800;margin-bottom:6px;letter-spacing:-.02em}
-.hero-banner-content p{font-size:14px;opacity:.85;line-height:1.6}
+function goHome() { navigate('/'); }
 
-/* ── Success ── */
-.success-box{text-align:center;padding:20px 0}
-.success-icon{font-size:48px;display:block;margin-bottom:12px}
-.success-box h3{font-size:22px;font-weight:800;margin-bottom:8px}
-.success-box p{color:var(--muted);line-height:1.7}
-
-/* ── Password screen ── */
-.pw-screen{display:flex;align-items:center;justify-content:center;padding:40px 20px}
-.pw-box{
-  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);
-  padding:28px 24px;width:100%;max-width:360px;box-shadow:var(--shadow-md);text-align:center;
+/* ════════════════════════════════════
+   SIDEBAR
+════════════════════════════════════ */
+function toggleSidebar() {
+  const s = document.getElementById('sidebar');
+  const o = document.getElementById('sidebar-overlay');
+  if (s.classList.contains('open')) closeSidebar();
+  else { s.classList.add('open'); o.classList.add('open'); }
 }
-.pw-box .material-symbols-outlined{font-size:40px;color:var(--primary);margin-bottom:8px}
-.pw-box h3{font-size:20px;font-weight:800;margin-bottom:6px}
-.pw-box p{color:var(--muted);font-size:14px;line-height:1.6;margin-bottom:16px}
-.pw-box input{
-  width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius);
-  font-size:16px;text-align:center;letter-spacing:.2em;margin-bottom:10px;
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('sidebar-overlay').classList.remove('open');
 }
-.pw-box input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-mid)}
-.pw-error{color:var(--hot);font-size:12px;font-weight:600;margin-bottom:10px;display:none}
 
-/* ── Hub page (project list) ── */
-.hub-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-top:20px}
-.project-card{
-  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);
-  padding:20px;cursor:pointer;transition:all .2s;display:block;text-decoration:none;color:inherit;
+function renderSidebarNav(items) {
+  document.getElementById('sidebar-nav').innerHTML = items.map(item => {
+    if (item.divider) return '<div class="nav-divider"></div>';
+    if (item.label_only) return `<div class="sidebar-section-label">${item.label_only}</div>`;
+    const active = item.active ? ' active' : '';
+    return `<button class="nav-item${active}" onclick="${item.onclick}">
+      <span class="material-symbols-outlined">${item.icon}</span> ${item.label}
+    </button>`;
+  }).join('');
 }
-.project-card:hover{border-color:var(--primary);box-shadow:var(--shadow-md);transform:translateY(-2px)}
-.project-card-icon{width:44px;height:44px;border-radius:var(--radius-lg);background:var(--primary-lt);
-  display:flex;align-items:center;justify-content:center;margin-bottom:12px}
-.project-card-icon .material-symbols-outlined{font-size:22px;color:var(--primary)}
-.project-card-name{font-size:16px;font-weight:800;margin-bottom:4px}
-.project-card-sub{font-size:12px;color:var(--muted);margin-bottom:12px}
-.project-card-stats{display:flex;gap:8px}
-.project-stat{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);color:var(--muted)}
 
-/* ── Home / role selector ── */
-.home-screen{min-height:80vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;text-align:center}
-.home-logo{font-size:48px;margin-bottom:16px}
-.home-title{font-size:28px;font-weight:900;letter-spacing:-.03em;margin-bottom:8px}
-.home-sub{color:var(--muted);font-size:15px;margin-bottom:32px;line-height:1.6}
-.role-cards{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;max-width:520px}
-.role-card{
-  flex:1;min-width:140px;max-width:200px;
-  background:var(--surface);border:2px solid var(--border);border-radius:var(--radius-xl);
-  padding:20px 16px;cursor:pointer;transition:all .2s;text-align:center;
+function updateSidebarForProject() {
+  if (!currentProject) return;
+  const key = currentProject.key;
+  const hash = location.hash;
+  document.getElementById('sidebar-brand-title').textContent = `${currentProject.orgName} · ${currentProject.eventName}`;
+  document.getElementById('sidebar-brand-sub').textContent = currentProject.venueLine || 'LeadPad';
+
+  const boothBadge = document.getElementById('sidebar-booth-badge');
+  const boothText  = document.getElementById('sidebar-booth-badge-text');
+  if (session.role) {
+    boothBadge.style.display = 'flex';
+    boothText.textContent = `Booth #${currentProject.orgName}`;
+  } else {
+    boothBadge.style.display = 'none';
+  }
+
+  const items = [
+    { label_only: 'Public' },
+    { icon: 'edit_square', label: 'Submit Interest', onclick: `navigate('/${key}')`, active: hash === `#/${key}` },
+  ];
+
+  if (session.role) {
+    items.push({ label_only: 'Internal' });
+    items.push({ icon: 'dashboard', label: 'Dashboard', onclick: `navigate('/${key}/dash')`, active: hash.includes('/dash') });
+    items.push({ icon: 'edit_note', label: 'Booth Entry', onclick: `navigate('/${key}/booth')`, active: hash.includes('/booth') });
+    if (session.role === 'admin') {
+      items.push({ icon: 'settings', label: 'Settings', onclick: `navigate('/${key}/settings')`, active: hash.includes('/settings') });
+    }
+    items.push({ divider: true });
+    items.push({ icon: 'grid_view', label: 'All Projects', onclick: `navigate('/hub')` });
+    items.push({ icon: 'download', label: 'Export CSV', onclick: `exportCSV()` });
+    items.push({ divider: true });
+    items.push({ icon: 'lock', label: 'Log out', onclick: `logOut()` });
+  } else {
+    items.push({ divider: true });
+    items.push({ icon: 'admin_panel_settings', label: 'Team login', onclick: `navigate('/login')` });
+  }
+
+  renderSidebarNav(items);
 }
-.role-card:hover{border-color:var(--primary);box-shadow:var(--shadow-md);transform:translateY(-3px)}
-.role-card .material-symbols-outlined{font-size:32px;color:var(--primary);margin-bottom:8px;display:block}
-.role-card-label{font-size:14px;font-weight:700}
-.role-card-desc{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.4}
 
-/* ── Booth add btn ── */
-.add-btn{
-  width:100%;padding:14px;border:1.5px dashed var(--border);border-radius:var(--radius-xl);
-  background:var(--surface);cursor:pointer;font-size:14px;font-weight:600;
-  color:var(--primary);display:flex;align-items:center;justify-content:center;gap:8px;
-  transition:all .15s;margin-bottom:16px;
+function updateSidebarGeneric() {
+  document.getElementById('sidebar-brand-title').textContent = 'NYTG LeadPad';
+  document.getElementById('sidebar-brand-sub').textContent = 'Lead Management';
+  document.getElementById('sidebar-booth-badge').style.display = 'none';
+
+  const items = [];
+  if (session.role) {
+    items.push({ icon: 'grid_view', label: 'All Projects', onclick: `navigate('/hub')`, active: location.hash.includes('hub') });
+    items.push({ divider: true });
+    items.push({ icon: 'lock', label: 'Log out', onclick: `logOut()` });
+  } else {
+    items.push({ icon: 'home', label: 'Home', onclick: `navigate('/')`, active: location.hash === '#/' || location.hash === '' });
+    items.push({ icon: 'admin_panel_settings', label: 'Team login', onclick: `navigate('/login')` });
+  }
+  renderSidebarNav(items);
 }
-.add-btn:hover{border-color:var(--primary);background:var(--primary-lt)}
 
-/* ── Split layout ── */
-.split-layout{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-
-/* ── Responsive ── */
-@media(max-width:1024px){
-  .sidebar{transform:translateX(calc(-1 * var(--sidebar-w)))}
-  .sidebar.open{transform:translateX(0)}
-  .topbar-hamburger{display:flex}
-  .main{margin-left:0!important}
-  .split-layout{grid-template-columns:1fr}
-  .stats-row{grid-template-columns:repeat(2,1fr)}
+/* ════════════════════════════════════
+   TOPBAR
+════════════════════════════════════ */
+function updateTopbarCount() {
+  const el  = document.getElementById('topbar-leads');
+  const cnt = document.getElementById('topbar-leads-count');
+  const hash = location.hash;
+  if (session.role && currentProject && !hash.endsWith(currentProject.key)) {
+    el.style.display = 'flex';
+    cnt.textContent = leads.length;
+  } else {
+    el.style.display = 'none';
+  }
 }
-@media(max-width:640px){
-  .page-content{padding:12px}
-  .grid2,.grid3{grid-template-columns:1fr}
-  .fabric-grid{grid-template-columns:repeat(3,1fr)}
-  .stats-row{grid-template-columns:repeat(2,1fr)}
-  .hero-banner{padding:24px 16px}
-  .hero-banner-content h3{font-size:18px}
+
+function setTopbarTitle(title) {
+  document.getElementById('topbar-title').textContent = title;
 }
-@media(max-width:360px){
-  .fabric-grid{grid-template-columns:1fr 1fr}
-  .stats-row{grid-template-columns:1fr 1fr}
+
+function updateRoleBadge() {
+  const badge = document.getElementById('topbar-role-badge');
+  if (!session.role) { badge.style.display = 'none'; return; }
+  badge.style.display = 'block';
+  badge.className = 'topbar-role-badge role-' + session.role;
+  badge.textContent = session.role.charAt(0).toUpperCase() + session.role.slice(1);
 }
-@media(min-width:1025px){
-  .main{margin-left:var(--sidebar-w)}
+
+/* ════════════════════════════════════
+   AUTH
+════════════════════════════════════ */
+function tryLogin(password, redirectKey) {
+  if (!currentProject && redirectKey) {
+    // Need to load config first
+    loadProjectConfig(redirectKey).then(cfg => {
+      if (!cfg) { showToast('Project not found', 'error'); return; }
+      currentProject = { key: redirectKey, ...cfg };
+      tryLogin(password, redirectKey);
+    });
+    return;
+  }
+
+  // Try project passwords (if a project is in context)
+  if (currentProject) {
+    if (password === currentProject.adminPassword) {
+      session = { role: 'admin', projectKey: currentProject.key };
+      saveSession(); afterLogin(); return;
+    }
+    if (password === currentProject.creatorPassword) {
+      session = { role: 'creator', projectKey: currentProject.key };
+      saveSession(); afterLogin(); return;
+    }
+  }
+
+  document.getElementById('pw-error').style.display = 'block';
+  document.getElementById('pw-input').value = '';
+  document.getElementById('pw-input').focus();
 }
-</style>
-</head>
-<body>
 
-<!-- SIDEBAR OVERLAY (mobile) -->
-<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+function afterLogin() {
+  updateRoleBadge();
+  const dest = currentProject ? `/${currentProject.key}/dash` : '/hub';
+  navigate(dest);
+}
 
-<!-- APP WRAPPER -->
-<div class="app">
+function logOut() {
+  session = { role: null, projectKey: null };
+  saveSession();
+  if (leadsListener) { leadsListener(); leadsListener = null; }
+  leads = [];
+  currentProject = null;
+  updateRoleBadge();
+  goHome();
+}
 
-  <!-- ════════ SIDEBAR ════════ -->
-  <aside class="sidebar" id="sidebar">
-    <div class="sidebar-brand">
-      <div class="sidebar-brand-title" id="sidebar-brand-title">NYTG LeadPad</div>
-      <div class="sidebar-brand-sub" id="sidebar-brand-sub">Lead Management</div>
-    </div>
+/* ════════════════════════════════════
+   PAGE RENDERERS
+════════════════════════════════════ */
+function setContent(html) {
+  document.getElementById('page-content').innerHTML = html;
+}
+function renderError(msg) {
+  setTopbarTitle('Error');
+  setContent(`<div class="card" style="text-align:center;padding:40px">
+    <span class="material-symbols-outlined" style="font-size:48px;color:var(--muted);opacity:.4">error</span>
+    <div style="margin-top:12px;color:var(--muted);font-size:15px">${esc(msg)}</div>
+    <button class="btn-secondary" style="margin:16px auto 0;display:inline-flex" onclick="navigate('/')">Go home</button>
+  </div>`);
+}
+function renderPage(html, title) {
+  setTopbarTitle(title);
+  setContent(html);
+}
 
-    <!-- Booth sync badge (shown when logged in) -->
-    <div class="sidebar-booth-badge" id="sidebar-booth-badge" style="display:none">
-      <span class="material-symbols-outlined">store</span>
-      <div>
-        <div class="sidebar-booth-badge-text" id="sidebar-booth-badge-text">Booth Active</div>
-        <div style="font-size:10px;color:var(--teal-dk)">Lead Sync Active</div>
-      </div>
-      <div class="sidebar-booth-badge-dot"></div>
-    </div>
+/* ─── HOME ─── */
+async function renderHome() {
+  updateSidebarGeneric();
+  updateRoleBadge();
+  setTopbarTitle('LeadPad');
 
-    <div class="sidebar-nav" id="sidebar-nav" style="padding-top:12px">
-      <!-- Populated by router -->
-    </div>
+  // If already logged in, redirect to hub
+  if (session.role && session.projectKey) {
+    navigate(`/${session.projectKey}/dash`);
+    return;
+  }
+  if (session.role) {
+    navigate('/hub');
+    return;
+  }
 
-    <div class="sidebar-footer">
-      <div class="sidebar-footer-text" id="sidebar-footer-text">NYTG LeadPad v2</div>
-    </div>
-  </aside>
-
-  <!-- ════════ MAIN ════════ -->
-  <div class="main">
-
-    <!-- TOP BAR -->
-    <header class="topbar">
-      <button class="topbar-hamburger" onclick="toggleSidebar()" aria-label="Menu">
-        <span class="material-symbols-outlined" style="font-size:20px">menu</span>
-      </button>
-      <div class="topbar-title" id="topbar-title">LeadPad</div>
-      <div class="topbar-right">
-        <div class="topbar-stat-pill" id="topbar-leads" style="display:none">
-          <span class="material-symbols-outlined">group</span>
-          <span id="topbar-leads-count">0</span> leads
+  // Load project list to show "direct links" or just role cards
+  setContent(`
+    <div class="home-screen">
+      <div class="home-logo">📋</div>
+      <div class="home-title">NYTG LeadPad</div>
+      <div class="home-sub">Lead capture & management platform.<br>Choose how you'd like to continue.</div>
+      <div class="role-cards">
+        <div class="role-card" onclick="navigate('/bharattex2026')">
+          <span class="material-symbols-outlined">edit_square</span>
+          <div class="role-card-label">Submit Interest</div>
+          <div class="role-card-desc">Fill the public form for Bharat Tex 2026</div>
         </div>
-        <div id="topbar-role-badge" class="topbar-role-badge" style="display:none"></div>
+        <div class="role-card" onclick="navigate('/login')">
+          <span class="material-symbols-outlined">admin_panel_settings</span>
+          <div class="role-card-label">Team Login</div>
+          <div class="role-card-desc">Access dashboard & booth entry</div>
+        </div>
       </div>
-    </header>
+    </div>
+  `);
+}
 
-    <!-- PAGE CONTENT (router renders here) -->
-    <div class="page-content" id="page-content">
-      <div style="text-align:center;padding:60px 20px;color:var(--muted)">
-        <span class="material-symbols-outlined" style="font-size:40px;opacity:.4">hourglass_top</span>
-        <div style="margin-top:8px;font-size:14px">Loading…</div>
+/* ─── LOGIN ─── */
+async function renderLogin() {
+  updateSidebarGeneric();
+  setTopbarTitle('Team Login');
+
+  // Try to figure out which project to authenticate against
+  // Use session.projectKey hint, or default to bharattex2026
+  const projectHint = session.projectKey || 'bharattex2026';
+  if (!currentProject || currentProject.key !== projectHint) {
+    const cfg = await loadProjectConfig(projectHint);
+    if (cfg) currentProject = { key: projectHint, ...cfg };
+  }
+
+  setContent(`
+    <div class="pw-screen" style="min-height:60vh">
+      <div class="pw-box">
+        <span class="material-symbols-outlined">admin_panel_settings</span>
+        <h3>Team access</h3>
+        <p>Enter your Admin or Creator password to continue.</p>
+        <input type="password" id="pw-input" placeholder="••••••••"
+          onkeydown="if(event.key==='Enter')doLogin()">
+        <div class="pw-error" id="pw-error">Incorrect password — try again</div>
+        <button class="btn-primary" onclick="doLogin()">
+          <span class="material-symbols-outlined">login</span> Enter
+        </button>
+        <button class="btn-ghost" style="margin-top:8px;width:100%" onclick="navigate('/')">← Back</button>
+      </div>
+    </div>
+  `);
+}
+
+/* ─── HUB ─── */
+async function renderHub() {
+  updateSidebarGeneric();
+  setTopbarTitle('All Projects');
+  updateRoleBadge();
+
+  setContent(`<div style="text-align:center;padding:40px;color:var(--muted)">
+    <span class="material-symbols-outlined" style="font-size:36px;opacity:.4">hourglass_top</span>
+    <div style="margin-top:8px">Loading projects…</div>
+  </div>`);
+
+  const projects = await loadAllProjects();
+
+  let cardsHtml = '';
+  if (!projects.length) {
+    cardsHtml = `<div class="empty"><span class="material-symbols-outlined">folder_off</span>No projects yet.</div>`;
+  } else {
+    cardsHtml = `<div class="hub-grid">` + projects.map(p => `
+      <div class="project-card" onclick="navigate('/${p.key}/dash')">
+        <div class="project-card-icon">
+          <span class="material-symbols-outlined">event</span>
+        </div>
+        <div class="project-card-name">${esc(p.eventName)}</div>
+        <div class="project-card-sub">${esc(p.orgName)}${p.venueLine ? ' · ' + esc(p.venueLine) : ''}</div>
+        <div class="project-card-stats">
+          <span class="project-stat">📋 ${p.leadCount} leads</span>
+          <span class="project-stat">/${p.key}</span>
+        </div>
+      </div>
+    `).join('') + `</div>`;
+  }
+
+  setContent(`
+    <div class="section-head">
+      <h2>All Projects</h2>
+      <p>Click a project to open its dashboard.</p>
+    </div>
+    ${cardsHtml}
+  `);
+}
+
+/* ─── PUBLIC FORM ─── */
+async function renderPublicForm() {
+  const cfg = currentProject;
+  setTopbarTitle('Share your fabric needs');
+  updateSidebarForProject();
+  updateRoleBadge();
+
+  // Reset form state
+  selectedFabrics = [];
+  selectedApparel = [];
+  selectedSource = '';
+
+  const fabricHtml = cfg.fabrics.map(f =>
+    `<div class="fabric-card" onclick="toggleFabric(this,'${f.name.replace(/'/g,"\\'")}')">
+      <div class="fc-icon">${f.icon}</div>
+      <div class="fc-name">${esc(f.name)}</div>
+      <div class="fc-sub">${esc(f.sub)}</div>
+    </div>`
+  ).join('');
+
+  const sourceHtml = cfg.sources.map(s =>
+    `<button class="chip" onclick="selectSource(this,'${s.label.replace(/'/g,"\\'")}',${s.showsSalesperson ? 'true' : 'false'})">${esc(s.label)}</button>`
+  ).join('');
+
+  const apparelHtml = cfg.apparelTypes.map(a =>
+    `<button class="chip" onclick="toggleChip(this,'apparel')">${esc(a)}</button>`
+  ).join('');
+
+  // Salesperson field
+  let spInner = '';
+  if (cfg.salespeople && cfg.salespeople.length) {
+    const opts = cfg.salespeople.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
+    spInner = `
+      <div class="field" style="margin-top:10px;margin-bottom:0">
+        <label>Sales person who assisted you</label>
+        <select id="f-salesperson-select" onchange="onSalespersonSelectChange(this)">
+          <option value="">Select...</option>${opts}
+          <option value="__other__">Other...</option>
+        </select>
+      </div>
+      <div class="field" id="salesperson-other-wrap" style="margin-top:8px;display:none;margin-bottom:0">
+        <label>Please specify</label>
+        <input id="f-salesperson" placeholder="Enter name">
+      </div>`;
+  } else {
+    spInner = `
+      <div class="field" style="margin-top:10px;margin-bottom:0">
+        <label>Sales person who assisted you</label>
+        <input id="f-salesperson" placeholder="e.g. Khun Nook">
+      </div>`;
+  }
+
+  setContent(`
+    <div id="form-view">
+      <div class="hero-banner">
+        <div class="hero-banner-overlay"></div>
+        <div class="hero-banner-content">
+          <h3>Share your fabric needs</h3>
+          <p>Fill in a few details — we'll send your personalised NYTG moodboard to your email.</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h4><span class="material-symbols-outlined">person_add</span> Contact information</h4>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>Name *</label><input id="f-name" placeholder="Your full name" autocomplete="name"></div>
+          <div class="field"><label>Company / Brand *</label><input id="f-company" placeholder="Company name" autocomplete="organization"></div>
+        </div>
+        <div class="grid2">
+          <div class="field"><label>Email *</label><input id="f-email" type="email" placeholder="work@email.com" autocomplete="email"></div>
+          <div class="field"><label>Country</label><input id="f-country" placeholder="Country" autocomplete="country-name"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h4><span class="material-symbols-outlined">sensors</span> How did you hear about us? *</h4>
+        </div>
+        <div class="chip-row" id="source-chips">${sourceHtml}</div>
+        <div class="salesperson-field" id="other-source-field">
+          <div class="field" style="margin-top:10px;margin-bottom:0">
+            <label>Please specify</label>
+            <input id="f-source-other" placeholder="e.g. Friend referral, Trade show...">
+          </div>
+        </div>
+        <div class="salesperson-field" id="salesperson-field">${spInner}</div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h4><span class="material-symbols-outlined">inventory_2</span> Fabric interest *</h4>
+        </div>
+        <div class="fabric-grid" id="fabric-cards">${fabricHtml}</div>
+        <div style="margin-top:16px">
+          <div class="field" style="margin-bottom:6px">
+            <label>Apparel type (select all that apply)</label>
+          </div>
+          <div class="chip-row" id="apparel-chips">${apparelHtml}</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h4><span class="material-symbols-outlined">chat_bubble</span> Message &amp; requirements</h4>
+        </div>
+        <div class="field" style="margin-bottom:0">
+          <textarea id="f-msg" placeholder="Tell us about your project or fabric direction..."></textarea>
+        </div>
+      </div>
+
+      <button class="btn-primary btn-teal" onclick="submitPublicForm()">
+        <span class="material-symbols-outlined">send</span>
+        Submit &amp; get moodboard
+      </button>
+    </div>
+
+    <div id="success-view" style="display:none">
+      <div class="card">
+        <div class="success-box">
+          <span class="success-icon">✅</span>
+          <h3>Thank you!</h3>
+          <p>Your moodboard link will be sent to<br><strong id="conf-email"></strong><br><br>Our team may follow up for further discussion.</p>
+          <button class="btn-secondary" style="margin-top:16px" onclick="renderPublicForm()">Submit another</button>
+        </div>
+      </div>
+    </div>
+  `);
+
+  subscribeLeads(cfg.key);
+}
+
+/* ─── DASHBOARD ─── */
+async function renderDashPage() {
+  const cfg = currentProject;
+  setTopbarTitle('Lead Dashboard');
+  updateSidebarForProject();
+  updateRoleBadge();
+  subscribeLeads(cfg.key);
+
+  const filterPills = [
+    { label: 'All', value: 'All', on: true },
+    ...cfg.fabrics.map(f => ({ label: f.name, value: f.name })),
+    { label: '🔥 Hot', value: 'Hot' },
+    { label: 'Booth', value: 'Booth' },
+    { label: 'Online', value: 'Online' },
+  ].map(f =>
+    `<button class="filter-pill${f.on ? ' on' : ''}" onclick="setFilter('${f.value.replace(/'/g,"\\'")}',this)">${esc(f.label)}</button>`
+  ).join('');
+
+  setContent(`
+    <div class="section-head">
+      <h2>Lead Dashboard</h2>
+      <p>${esc(cfg.eventName)} · ${esc(cfg.venueLine || '')}</p>
+    </div>
+
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-label">Total leads</div>
+        <div class="stat-val" id="st-total">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">🔥 Hot</div>
+        <div class="stat-val" id="st-hot" style="color:var(--hot)">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">🌤 Warm</div>
+        <div class="stat-val" id="st-warm" style="color:var(--warm)">—</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">❄️ Cold</div>
+        <div class="stat-val" id="st-cold" style="color:var(--cold)">—</div>
       </div>
     </div>
 
-  </div><!-- /main -->
-</div><!-- /app -->
+    <div class="filter-row" id="dash-filters">${filterPills}</div>
 
-<script type="module" src="leadpad.js?v=8"></script>
-</body>
-</html>
+    <div id="dash-list" class="lead-list">
+      <div class="empty">
+        <span class="material-symbols-outlined">inbox</span>
+        Loading leads…
+      </div>
+    </div>
+  `);
+
+  activeFilter = 'All';
+}
+
+function renderDashList() {
+  const el = document.getElementById('dash-list');
+  if (!el || !currentProject) return;
+
+  // Update stats
+  const statTotal = document.getElementById('st-total');
+  const statHot   = document.getElementById('st-hot');
+  const statWarm  = document.getElementById('st-warm');
+  const statCold  = document.getElementById('st-cold');
+  if (statTotal) {
+    statTotal.textContent = leads.length;
+    statHot.textContent   = leads.filter(l => (l.manualTemp || l.autoTemp || l.priority) === 'Hot').length;
+    statWarm.textContent  = leads.filter(l => (l.manualTemp || l.autoTemp || l.priority) === 'Warm').length;
+    statCold.textContent  = leads.filter(l => (l.manualTemp || l.autoTemp || l.priority) === 'Cold').length;
+  }
+
+  const priorities = currentProject.priorities.map(p => p.value);
+  const filtered = leads.filter(l => {
+    const temp = l.manualTemp || l.autoTemp || l.priority;
+    if (activeFilter === 'All') return true;
+    if (priorities.includes(activeFilter)) return temp === activeFilter;
+    if (activeFilter === 'Booth') return l.source === 'Booth';
+    if (activeFilter === 'Online') return l.source !== 'Booth';
+    return l.fabric && l.fabric.includes(activeFilter);
+  }).slice().reverse();
+
+  el.innerHTML = filtered.length
+    ? filtered.map(l => leadHTML(l, currentProject)).join('')
+    : '<div class="empty"><span class="material-symbols-outlined">search_off</span>No leads match this filter.</div>';
+}
+
+/* ─── BOOTH PAGE ─── */
+async function renderBoothPage() {
+  const cfg = currentProject;
+  setTopbarTitle('Booth Entry');
+  updateSidebarForProject();
+  updateRoleBadge();
+  subscribeLeads(cfg.key);
+  boothFormOpen = false;
+
+  // Build fabric select options
+  const fabricOpts = [
+    ...cfg.fabrics.map(f => `<option value="${esc(f.name)}">${esc(f.name)}</option>`),
+    ...(cfg.fabricSelectExtras || []).map(n => `<option value="${esc(n)}">${esc(n)}</option>`),
+  ].join('');
+
+  // Priority radios
+  const prioHtml = cfg.priorities.map(p =>
+    `<div class="priority-opt">
+      <input type="radio" name="b-priority" id="bp-${p.value.toLowerCase()}" value="${esc(p.value)}"${p.default ? ' checked' : ''}>
+      <label for="bp-${p.value.toLowerCase()}" class="${esc(p.cssClass)}">${p.label}</label>
+    </div>`
+  ).join('');
+
+  setContent(`
+    <div class="section-head">
+      <h2>Booth Entry</h2>
+      <p>Add walk-in contacts directly from the booth.</p>
+    </div>
+
+    <div class="split-layout">
+      <!-- Left: Add form -->
+      <div>
+        <button class="add-btn" id="add-btn" onclick="toggleBoothForm()">
+          <span class="material-symbols-outlined" style="font-size:18px">add</span>
+          Add new contact
+        </button>
+
+        <div id="booth-form" style="display:none">
+          <div class="card">
+            <div class="card-header">
+              <h4><span class="material-symbols-outlined">person_add</span> New contact</h4>
+              <span class="card-tag">${esc(cfg.boothId || cfg.orgName)}</span>
+            </div>
+            <div class="grid2">
+              <div class="field"><label>Name *</label><input id="b-name" placeholder="Full name" tabindex="1"></div>
+              <div class="field"><label>Company</label><input id="b-company" placeholder="Company" tabindex="2"></div>
+              <div class="field"><label>Email</label><input id="b-email" type="email" placeholder="Email" tabindex="3"></div>
+              <div class="field"><label>Country</label><input id="b-country" placeholder="Country" tabindex="4"></div>
+            </div>
+            <div class="grid2">
+              <div class="field">
+                <label>Fabric interest</label>
+                <select id="b-fabric" tabindex="5"><option value="">Select...</option>${fabricOpts}</select>
+              </div>
+              <div class="field">
+                <label>Sales person</label>
+                <input id="b-sales" placeholder="Your name" tabindex="6">
+              </div>
+            </div>
+            <div class="field">
+              <label>Priority</label>
+              <div class="priority-row" id="booth-priority-row">${prioHtml}</div>
+            </div>
+            <div class="field">
+              <label>Note</label>
+              <input id="b-note" placeholder="Quick note about this contact..." tabindex="7">
+            </div>
+            <div style="display:flex;gap:8px;margin-top:4px">
+              <button class="btn-primary" style="width:auto;padding:10px 20px;margin-top:0" onclick="saveBoothLead()" tabindex="8">
+                <span class="material-symbols-outlined">save</span> Save contact
+              </button>
+              <button class="btn-ghost" onclick="toggleBoothForm()">Cancel</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Recent booth leads -->
+      <div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+          <div style="font-size:14px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:6px">
+            <span class="material-symbols-outlined" style="font-size:18px;color:var(--muted)">history</span> Recent contacts
+          </div>
+          <button class="btn-secondary" style="font-size:12px;padding:4px 12px" onclick="navigate('/${cfg.key}/dash')">
+            View all <span class="material-symbols-outlined" style="font-size:14px">arrow_forward</span>
+          </button>
+        </div>
+        <div id="booth-list" class="lead-list">
+          <div class="empty">
+            <span class="material-symbols-outlined">group_add</span>
+            No contacts yet.
+          </div>
+        </div>
+      </div>
+    </div>
+  `);
+}
+
+function renderBoothList() {
+  const el = document.getElementById('booth-list');
+  if (!el || !currentProject) return;
+  const items = leads.filter(l => l.source === 'Booth').slice().reverse();
+  el.innerHTML = items.length
+    ? items.map(l => leadHTML(l, currentProject)).join('')
+    : '<div class="empty"><span class="material-symbols-outlined">group_add</span>No contacts yet.</div>';
+}
+
+/* ════════════════════════════════════
+   FORM INTERACTIONS (Public Form)
+════════════════════════════════════ */
+function selectSource(el, name, showsSalesperson) {
+  const wasSelected = el.classList.contains('selected');
+  document.querySelectorAll('#source-chips .chip').forEach(c => c.classList.remove('selected'));
+  const sp = document.getElementById('salesperson-field');
+  const otherField = document.getElementById('other-source-field');
+  if (wasSelected) {
+    selectedSource = '';
+    if (sp) sp.classList.remove('show');
+    if (otherField) otherField.classList.remove('show');
+    return;
+  }
+  el.classList.add('selected');
+  selectedSource = name;
+  if (sp) sp.classList.toggle('show', !!showsSalesperson);
+  if (otherField) otherField.classList.toggle('show', name === 'Other');
+}
+
+function onSalespersonSelectChange(sel) {
+  const wrap = document.getElementById('salesperson-other-wrap');
+  if (wrap) wrap.style.display = sel.value === '__other__' ? 'block' : 'none';
+  const inp = document.getElementById('f-salesperson');
+  if (inp && sel.value !== '__other__') inp.value = '';
+}
+
+function getSalesperson() {
+  const sel = document.getElementById('f-salesperson-select');
+  if (sel) {
+    if (sel.value === '__other__') return (document.getElementById('f-salesperson')?.value || '').trim();
+    return sel.value;
+  }
+  return (document.getElementById('f-salesperson')?.value || '').trim();
+}
+
+function toggleFabric(el, name) {
+  const i = selectedFabrics.indexOf(name);
+  if (i > -1) { selectedFabrics.splice(i, 1); el.classList.remove('selected'); }
+  else { selectedFabrics.push(name); el.classList.add('selected'); }
+}
+
+function toggleChip(el, group) {
+  const name = el.textContent.trim();
+  if (group === 'apparel') {
+    if (el.classList.contains('selected')) {
+      el.classList.remove('selected');
+      selectedApparel = selectedApparel.filter(a => a !== name);
+    } else {
+      el.classList.add('selected');
+      selectedApparel.push(name);
+    }
+  } else {
+    el.classList.toggle('selected');
+  }
+}
+
+/* ════════════════════════════════════
+   PUBLIC FORM SUBMIT
+════════════════════════════════════ */
+async function submitPublicForm() {
+  const name    = document.getElementById('f-name').value.trim();
+  const email   = document.getElementById('f-email').value.trim();
+  const company = document.getElementById('f-company').value.trim();
+  if (!name || !email || !company) { showToast('Please fill in Name, Company and Email.', 'error'); return; }
+  if (!selectedFabrics.length) { showToast('Please select at least one fabric interest.', 'error'); return; }
+  if (!selectedSource) { showToast('Please select how you heard about us.', 'error'); return; }
+
+  const cfg = currentProject;
+  const src = cfg.sources.find(s => s.label === selectedSource);
+  const salesperson = (src && src.showsSalesperson) ? getSalesperson() : '';
+  const otherText = document.getElementById('f-source-other')?.value.trim() || '';
+  const source = (selectedSource === 'Other' && otherText) ? otherText : selectedSource;
+
+  const defaultPriority = cfg.priorities.find(p => p.default)?.value || cfg.priorities[0].value;
+
+  await saveLeadToProject(cfg.key, makeLead({
+    name, email, company,
+    country:    document.getElementById('f-country').value.trim(),
+    fabric:     selectedFabrics.join(', '),
+    apparel:    selectedApparel.join(', '),
+    msg:        document.getElementById('f-msg').value.trim(),
+    source, salesperson,
+    priority:   defaultPriority,
+    autoTemp:   defaultPriority,
+    manualTemp: '',
+    note: '',
+  }));
+
+  sendBrevoEmail(name, email, cfg);
+
+  document.getElementById('conf-email').textContent = email;
+  document.getElementById('form-view').style.display = 'none';
+  document.getElementById('success-view').style.display = 'block';
+  window.scrollTo(0, 0);
+}
+
+/* ════════════════════════════════════
+   BOOTH ENTRY
+════════════════════════════════════ */
+function toggleBoothForm() {
+  boothFormOpen = !boothFormOpen;
+  document.getElementById('booth-form').style.display = boothFormOpen ? 'block' : 'none';
+  document.getElementById('add-btn').style.display = boothFormOpen ? 'none' : 'flex';
+  if (boothFormOpen) document.getElementById('b-name').focus();
+}
+
+async function saveBoothLead() {
+  const cfg = currentProject;
+  const name = document.getElementById('b-name').value.trim();
+  if (!name) { showToast('Name is required.', 'error'); return; }
+
+  const priorityEl = document.querySelector('input[name="b-priority"]:checked');
+  const defaultPriority = cfg.priorities.find(p => p.default)?.value || cfg.priorities[0].value;
+  const priority = priorityEl ? priorityEl.value : defaultPriority;
+
+  await saveLeadToProject(cfg.key, makeLead({
+    name,
+    company:    document.getElementById('b-company').value.trim(),
+    email:      document.getElementById('b-email').value.trim(),
+    country:    document.getElementById('b-country').value.trim(),
+    fabric:     document.getElementById('b-fabric').value,
+    apparel: '', msg: '',
+    source:     'Booth',
+    salesperson: document.getElementById('b-sales').value.trim(),
+    priority, autoTemp: priority, manualTemp: '',
+    note:       document.getElementById('b-note').value.trim(),
+  }));
+
+  ['b-name','b-company','b-email','b-country','b-sales','b-note'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('b-fabric').value = '';
+  const defaultRadio = document.querySelector(`input[name="b-priority"][value="${defaultPriority}"]`);
+  if (defaultRadio) defaultRadio.checked = true;
+  boothFormOpen = false;
+  document.getElementById('booth-form').style.display = 'none';
+  document.getElementById('add-btn').style.display = 'flex';
+  showToast('Contact saved!', 'success');
+}
+
+/* ════════════════════════════════════
+   FILTER / SORT
+════════════════════════════════════ */
+function setFilter(f, btn) {
+  activeFilter = f;
+  document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  renderDashList();
+}
+
+/* ════════════════════════════════════
+   LEAD HTML CARD
+════════════════════════════════════ */
+function leadHTML(l, cfg) {
+  const fabrics = (l.fabric || '').split(', ').filter(Boolean);
+  const fabricBadges = fabrics.map(f => {
+    const c = cfg.fabrics.find(x => x.name === f);
+    return `<span class="badge ${c ? c.badgeClass : 'badge-gray'}">${esc(f)}</span>`;
+  }).join('');
+
+  const temp = l.manualTemp || l.autoTemp || l.priority;
+  const pCfg = cfg.priorities.find(p => p.value === temp);
+  const pClass = pCfg ? pCfg.badgeClass : 'badge-gray';
+  const srcClass = l.source === 'Booth' ? 'badge-purple' : 'badge-gray';
+  const salesBadge = l.salesperson ? `<span class="badge badge-gray">👤 ${esc(l.salesperson)}</span>` : '';
+  const appParts = l.apparel ? l.apparel.split(', ') : [];
+  const appBadge = appParts.length
+    ? `<span class="badge badge-gray">${esc(appParts[0])}${appParts.length > 1 ? ' +' + (appParts.length - 1) : ''}</span>` : '';
+
+  const manualIndicator = l.manualTemp
+    ? `<span class="badge badge-amber" title="Manual override">✏️ ${esc(l.manualTemp)}</span>`
+    : '';
+
+  const priorityOptions = cfg.priorities.map(p =>
+    `<option${(l.manualTemp || l.priority) === p.value ? ' selected' : ''} value="${esc(p.value)}">${p.label}</option>`
+  ).join('');
+
+  const noteRow = l.note
+    ? `<div class="note-text"><span class="material-symbols-outlined" style="font-size:13px">edit_note</span>${esc(l.note)}</div>` : '';
+
+  const key = l._key || l.id;
+  return `<div class="lead-card">
+    <div class="lead-top">
+      <div style="display:flex;gap:10px;align-items:flex-start;flex:1;min-width:0">
+        <div class="lead-avatar">${initials(l.name)}</div>
+        <div class="lead-info">
+          <div class="lead-name">${esc(l.name)}</div>
+          <div class="lead-sub">${esc(l.company || '—')}${l.country ? ' · ' + esc(l.country) : ''}${l.email ? ' · ' + esc(l.email) : ''}</div>
+        </div>
+      </div>
+      <select class="priority-select" onchange="updateLeadTemp('${key}',this.value)">${priorityOptions}</select>
+    </div>
+    <div class="badges">${fabricBadges}${appBadge}<span class="badge ${srcClass}">${esc(l.source)}</span>${manualIndicator || '<span class="badge ' + pClass + '">' + esc(temp) + '</span>'}${salesBadge}</div>
+    ${noteRow}
+    <div class="note-area">
+      <input class="note-input" id="note-${key}" placeholder="Add note..." value="${esc(l.note || '')}">
+      <button class="btn-secondary" style="font-size:12px;padding:5px 12px;flex-shrink:0" onclick="saveNote('${key}')">Save</button>
+    </div>
+    <div class="lead-time">${esc(l.time)}</div>
+  </div>`;
+}
+
+/* ════════════════════════════════════
+   LEAD ACTIONS
+════════════════════════════════════ */
+async function updateLeadTemp(key, val) {
+  if (!currentProject) return;
+  await updateLeadInProject(currentProject.key, key, { manualTemp: val });
+}
+
+async function saveNote(key) {
+  if (!currentProject) return;
+  const note = document.getElementById('note-' + key).value.trim();
+  await updateLeadInProject(currentProject.key, key, { note });
+  showToast('Note saved!', 'success');
+}
+
+/* ════════════════════════════════════
+   EXPORT CSV
+════════════════════════════════════ */
+function exportCSV() {
+  if (!leads.length) { showToast('No leads to export yet.', 'error'); return; }
+  const cfg = currentProject;
+  const headers = ['Name','Company','Email','Country','Source','Salesperson','Fabric','Apparel','Message','Priority','Note','Time'];
+  const rows = leads.map(l => {
+    const temp = l.manualTemp || l.autoTemp || l.priority;
+    return [l.name,l.company,l.email,l.country,l.source,l.salesperson,l.fabric,l.apparel,l.msg,temp,l.note,l.time]
+      .map(v => `"${(v || '').replace(/"/g,'""')}"`)
+      .join(',');
+  });
+  const csv = [headers.join(','), ...rows].join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
+  a.download = `${cfg.orgName}_${cfg.eventName.replace(/\s+/g,'')}_Leads_` + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  closeSidebar();
+}
+
+/* ════════════════════════════════════
+   BREVO EMAIL
+════════════════════════════════════ */
+async function sendBrevoEmail(name, email, cfg) {
+  if (!cfg.brevoApiKey) return;
+  try {
+    await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: { 'api-key': cfg.brevoApiKey, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        to: [{ email, name }],
+        templateId: cfg.brevoTemplateId,
+        params: { NAME: name, EVENT_NAME: cfg.eventName },
+      }),
+    });
+  } catch (_) { /* fire-and-forget */ }
+}
+
+/* ════════════════════════════════════
+   HELPERS
+════════════════════════════════════ */
+function makeLead(data) {
+  return { id: Date.now() + Math.random(), ...data, time: new Date().toLocaleString('en-GB') };
+}
+function initials(name) {
+  return (name || '?').split(' ').slice(0, 2).map(w => w[0]).join('').toUpperCase();
+}
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ════════════════════════════════════
+   TOAST
+════════════════════════════════════ */
+let toastTimeout;
+function showToast(msg, type = 'success') {
+  let toast = document.getElementById('toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'toast';
+    toast.style.cssText = `position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(100px);padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,.15);z-index:9999;transition:transform .25s ease;white-space:nowrap;pointer-events:none;`;
+    document.body.appendChild(toast);
+  }
+  toast.textContent = msg;
+  toast.style.background = type === 'error' ? '#E24B4A' : '#1D9E75';
+  toast.style.color = '#fff';
+  clearTimeout(toastTimeout);
+  requestAnimationFrame(() => { toast.style.transform = 'translateX(-50%) translateY(0)'; });
+  toastTimeout = setTimeout(() => { toast.style.transform = 'translateX(-50%) translateY(100px)'; }, 2500);
+}
+
+/* ════════════════════════════════════
+   KEYBOARD SHORTCUTS
+════════════════════════════════════ */
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') closeSidebar();
+  if (session.role && currentProject) {
+    if (e.key === 'b' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); navigate(`/${currentProject.key}/booth`); }
+    if (e.key === 'd' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); navigate(`/${currentProject.key}/dash`); }
+  }
+});
+
+/* ════════════════════════════════════
+   EXPOSE GLOBALS (type="module" requirement)
+════════════════════════════════════ */
+window.toggleSidebar   = toggleSidebar;
+window.closeSidebar    = closeSidebar;
+window.navigate        = navigate;
+window.goHome          = goHome;
+window.doLogin         = () => {
+  const pw = document.getElementById('pw-input')?.value || '';
+  tryLogin(pw, session.projectKey || 'bharattex2026');
+};
+window.logOut          = logOut;
+window.selectSource    = selectSource;
+window.toggleFabric    = toggleFabric;
+window.toggleChip      = toggleChip;
+window.onSalespersonSelectChange = onSalespersonSelectChange;
+window.submitPublicForm = submitPublicForm;
+window.renderPublicForm = renderPublicForm;
+window.toggleBoothForm = toggleBoothForm;
+window.saveBoothLead   = saveBoothLead;
+window.exportCSV       = exportCSV;
+window.updateLeadTemp  = updateLeadTemp;
+window.saveNote        = saveNote;
+window.setFilter       = setFilter;
+window.renderDashList  = renderDashList;
+window.renderBoothList = renderBoothList;
+
+/* ════════════════════════════════════
+   BOOT — Hash Router
+════════════════════════════════════ */
+window.addEventListener('hashchange', route);
+
+// Handle initial load — if no hash, go to home
+if (!location.hash || location.hash === '#' || location.hash === '#/') {
+  location.hash = '/';
+}
+route();
