@@ -45,6 +45,25 @@ const BHARATTEX_DEFAULT = {
   salespeople: [],
   brevoApiKey: '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',
   brevoTemplateId: 2,
+  scoringRules: {
+    thresholds: { hot: 70, warm: 35 },
+    weights: {
+      fabricInterest: 20,
+      apparelInterest: 10,
+      message: 15,
+      boothSource: 25,
+      salesperson: 10,
+      company: 10,
+      email: 10,
+    },
+  },
+  dashboardWidgets: [
+    'fabricInterest',
+    'sourceBreakdown',
+    'salesperson',
+    'temperatureOverall',
+    'timeline',
+  ],
   priorities: [
     { value: 'Hot',  label: '🔥 Hot',  cssClass: 'p-hot',  badgeClass: 'badge-red'   },
     { value: 'Warm', label: '🌤 Warm', cssClass: 'p-warm', badgeClass: 'badge-amber', default: true },
@@ -57,20 +76,16 @@ const BHARATTEX_DEFAULT = {
 ════════════════════════════════════ */
 const SESSION_KEY = 'nytg_lp_session';
 
-let session = loadSession();   // { role: 'admin'|'creator'|null, projectKey: string|null }
-let currentProject = null;     // active project config from Firebase
-let leads = [];                // active project leads
-let leadsListener = null;      // Firebase onValue unsubscribe
+let session = loadSession();
+let currentProject = null;
+let leads = [];
+let leadsListener = null;
 
-// Form state (public form)
 let selectedFabrics = [];
 let selectedApparel = [];
 let selectedSource = '';
 
-// Filter state
 let activeFilter = 'All';
-
-// Booth state
 let boothFormOpen = false;
 
 function loadSession() {
@@ -83,42 +98,30 @@ function saveSession() {
 
 /* ════════════════════════════════════
    HASH ROUTER
-   /#/                → home (role selector)
-   /#/login           → login page
-   /#/hub             → hub (all projects) — Admin/Creator only
-   /#/{key}           → public form for project
-   /#/{key}/dash      → dashboard
-   /#/{key}/booth     → booth entry
-   /#/{key}/settings  → settings (Admin only) — Sprint 3
 ════════════════════════════════════ */
 async function route() {
   const hash = location.hash.replace(/^#\/?/, '');
   const parts = hash.split('/').filter(Boolean);
 
-  // /#/ or empty → Home
   if (parts.length === 0) {
     await renderHome();
     return;
   }
 
-  // /#/login
   if (parts[0] === 'login') {
     await renderLogin();
     return;
   }
 
-  // /#/hub
   if (parts[0] === 'hub') {
     if (!session.role) { goHome(); return; }
     await renderHub();
     return;
   }
 
-  // /#/{key}  or  /#/{key}/dash  etc.
   const eventKey = parts[0];
   const sub = parts[1] || '';
 
-  // Load project config (and cache it)
   const cfg = await loadProjectConfig(eventKey);
   if (!cfg) {
     renderError(`Project "${eventKey}" not found.`);
@@ -150,7 +153,6 @@ async function loadProjectConfig(key) {
   const snap = await get(ref(db, `projects/${key}/config`));
   if (snap.exists()) return snap.val();
 
-  // Auto-seed Bharat Tex if first run
   if (key === 'bharattex2026') {
     await set(ref(db, `projects/bharattex2026/config`), BHARATTEX_DEFAULT);
     return BHARATTEX_DEFAULT;
@@ -177,7 +179,7 @@ async function loadAllProjects() {
 }
 
 function subscribeLeads(key) {
-  if (leadsListener) leadsListener();  // unsubscribe previous
+  if (leadsListener) leadsListener();
   const leadsRef = ref(db, `projects/${key}/leads`);
   leadsListener = onValue(leadsRef, (snap) => {
     leads = [];
@@ -185,7 +187,6 @@ function subscribeLeads(key) {
       snap.forEach(child => leads.push({ _key: child.key, ...child.val() }));
     }
     updateTopbarCount();
-    // Re-render active view if on dash or booth
     const hash = location.hash;
     if (hash.includes('/dash')) renderDashList();
     if (hash.includes('/booth')) renderBoothList();
@@ -322,7 +323,6 @@ function updateRoleBadge() {
 ════════════════════════════════════ */
 function tryLogin(password, redirectKey) {
   if (!currentProject && redirectKey) {
-    // Need to load config first
     loadProjectConfig(redirectKey).then(cfg => {
       if (!cfg) { showToast('Project not found', 'error'); return; }
       currentProject = { key: redirectKey, ...cfg };
@@ -331,7 +331,6 @@ function tryLogin(password, redirectKey) {
     return;
   }
 
-  // Try project passwords (if a project is in context)
   if (currentProject) {
     if (password === currentProject.adminPassword) {
       session = { role: 'admin', projectKey: currentProject.key };
@@ -389,7 +388,6 @@ async function renderHome() {
   updateRoleBadge();
   setTopbarTitle('LeadPad');
 
-  // If already logged in, redirect to hub
   if (session.role && session.projectKey) {
     navigate(`/${session.projectKey}/dash`);
     return;
@@ -399,7 +397,6 @@ async function renderHome() {
     return;
   }
 
-  // Load project list to show "direct links" or just role cards
   setContent(`
     <div class="home-screen">
       <div class="home-logo">📋</div>
@@ -426,8 +423,6 @@ async function renderLogin() {
   updateSidebarGeneric();
   setTopbarTitle('Team Login');
 
-  // Try to figure out which project to authenticate against
-  // Use session.projectKey hint, or default to bharattex2026
   const projectHint = session.projectKey || 'bharattex2026';
   if (!currentProject || currentProject.key !== projectHint) {
     const cfg = await loadProjectConfig(projectHint);
@@ -500,7 +495,6 @@ async function renderPublicForm() {
   updateSidebarForProject();
   updateRoleBadge();
 
-  // Reset form state
   selectedFabrics = [];
   selectedApparel = [];
   selectedSource = '';
@@ -521,7 +515,6 @@ async function renderPublicForm() {
     `<button class="chip" onclick="toggleChip(this,'apparel')">${esc(a)}</button>`
   ).join('');
 
-  // Salesperson field
   let spInner = '';
   if (cfg.salespeople && cfg.salespeople.length) {
     const opts = cfg.salespeople.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
@@ -669,6 +662,8 @@ async function renderDashPage() {
       </div>
     </div>
 
+    <div class="dashboard-widgets" id="dashboard-widgets"></div>
+
     <div class="filter-row" id="dash-filters">${filterPills}</div>
 
     <div id="dash-list" class="lead-list">
@@ -686,7 +681,6 @@ function renderDashList() {
   const el = document.getElementById('dash-list');
   if (!el || !currentProject) return;
 
-  // Update stats
   const statTotal = document.getElementById('st-total');
   const statHot   = document.getElementById('st-hot');
   const statWarm  = document.getElementById('st-warm');
@@ -697,6 +691,7 @@ function renderDashList() {
     statWarm.textContent  = leads.filter(l => (l.manualTemp || l.autoTemp || l.priority) === 'Warm').length;
     statCold.textContent  = leads.filter(l => (l.manualTemp || l.autoTemp || l.priority) === 'Cold').length;
   }
+  renderDashboardWidgets();
 
   const priorities = currentProject.priorities.map(p => p.value);
   const filtered = leads.filter(l => {
@@ -713,6 +708,141 @@ function renderDashList() {
     : '<div class="empty"><span class="material-symbols-outlined">search_off</span>No leads match this filter.</div>';
 }
 
+function renderDashboardWidgets() {
+  const el = document.getElementById('dashboard-widgets');
+  if (!el || !currentProject) return;
+  const widgets = currentProject.dashboardWidgets || BHARATTEX_DEFAULT.dashboardWidgets || [];
+  el.innerHTML = widgets.map(type => {
+    if (type === 'fabricInterest') {
+      return barWidget('Fabric interest', 'Top requested fabric lines', countByCsv(leads, 'fabric'), 'var(--teal)');
+    }
+    if (type === 'sourceBreakdown') {
+      return barWidget('Source breakdown', 'Where leads came from', countByField(leads, 'source'), 'var(--primary)');
+    }
+    if (type === 'salesperson') {
+      return barWidget('Salesperson', 'Booth and referral ownership', countByField(leads, 'salesperson', 'Unassigned'), 'var(--warm)');
+    }
+    if (type === 'temperatureOverall') {
+      const counts = ['Hot', 'Warm', 'Cold'].map(label => ({
+        label,
+        value: leads.filter(l => leadTemp(l) === label).length,
+      }));
+      return barWidget('Temperature overall', 'Auto score plus manual override', counts, 'var(--hot)');
+    }
+    if (type === 'timeline') return timelineWidget();
+    return '';
+  }).join('');
+}
+
+function barWidget(title, sub, rows, color) {
+  const topRows = rows.filter(r => r.value > 0).slice(0, 5);
+  const max = Math.max(1, ...topRows.map(r => r.value));
+  const body = topRows.length ? topRows.map(r => {
+    const pct = Math.max(4, Math.round((r.value / max) * 100));
+    return `<div class="bar-row">
+      <div>
+        <div class="bar-label">${esc(r.label)}</div>
+        <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
+      </div>
+      <div class="bar-value">${r.value}</div>
+    </div>`;
+  }).join('') : '<div class="empty" style="padding:18px 8px">No data yet.</div>';
+  return `<div class="dash-widget">
+    <div class="widget-head">
+      <div class="widget-title">${esc(title)}</div>
+      <div class="widget-sub">${esc(sub)}</div>
+    </div>
+    <div class="bar-list">${body}</div>
+  </div>`;
+}
+
+function timelineWidget() {
+  const rows = lastSevenDays().map(day => ({
+    ...day,
+    value: leads.filter(l => leadDateKey(l) === day.key).length,
+  }));
+  const max = Math.max(1, ...rows.map(r => r.value));
+  const bars = rows.map(r => {
+    const height = Math.max(4, Math.round((r.value / max) * 92));
+    return `<div class="timeline-day">
+      <div class="timeline-count">${r.value}</div>
+      <div class="timeline-bar" style="height:${height}px"></div>
+      <div class="timeline-label">${esc(r.label)}</div>
+    </div>`;
+  }).join('');
+  return `<div class="dash-widget dash-widget-wide">
+    <div class="widget-head">
+      <div class="widget-title">Timeline</div>
+      <div class="widget-sub">Leads over the last 7 days</div>
+    </div>
+    <div class="timeline-bars">${bars}</div>
+  </div>`;
+}
+
+function countByCsv(items, field) {
+  const counts = new Map();
+  items.forEach(item => {
+    String(item[field] || '').split(',').map(x => x.trim()).filter(Boolean)
+      .forEach(value => counts.set(value, (counts.get(value) || 0) + 1));
+  });
+  return sortCounts(counts);
+}
+
+function countByField(items, field, fallback = '') {
+  const counts = new Map();
+  items.forEach(item => {
+    const value = String(item[field] || fallback).trim();
+    if (value) counts.set(value, (counts.get(value) || 0) + 1);
+  });
+  return sortCounts(counts);
+}
+
+function sortCounts(counts) {
+  return [...counts.entries()]
+    .map(([label, value]) => ({ label, value }))
+    .sort((a, b) => b.value - a.value || a.label.localeCompare(b.label));
+}
+
+function leadTemp(lead) {
+  return lead.manualTemp || lead.autoTemp || lead.priority || 'Warm';
+}
+
+function lastSevenDays() {
+  const days = [];
+  const today = new Date();
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    days.push({
+      key: dateKey(d),
+      label: d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
+    });
+  }
+  return days;
+}
+
+function leadDateKey(lead) {
+  const parsed = parseLeadTime(lead.time);
+  return parsed ? dateKey(parsed) : '';
+}
+
+function parseLeadTime(value) {
+  if (!value) return null;
+  const direct = new Date(value);
+  if (!Number.isNaN(direct.getTime())) return direct;
+  const match = String(value).match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})(?:,\s*(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  if (!match) return null;
+  return new Date(Number(match[3]), Number(match[2]) - 1, Number(match[1]), Number(match[4] || 0), Number(match[5] || 0), Number(match[6] || 0));
+}
+
+function dateKey(date) {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, '0'),
+    String(date.getDate()).padStart(2, '0'),
+  ].join('-');
+}
+
 /* ─── BOOTH PAGE ─── */
 async function renderBoothPage() {
   const cfg = currentProject;
@@ -722,13 +852,11 @@ async function renderBoothPage() {
   subscribeLeads(cfg.key);
   boothFormOpen = false;
 
-  // Build fabric select options
   const fabricOpts = [
     ...cfg.fabrics.map(f => `<option value="${esc(f.name)}">${esc(f.name)}</option>`),
     ...(cfg.fabricSelectExtras || []).map(n => `<option value="${esc(n)}">${esc(n)}</option>`),
   ].join('');
 
-  // Priority radios
   const prioHtml = cfg.priorities.map(p =>
     `<div class="priority-opt">
       <input type="radio" name="b-priority" id="bp-${p.value.toLowerCase()}" value="${esc(p.value)}"${p.default ? ' checked' : ''}>
@@ -743,7 +871,6 @@ async function renderBoothPage() {
     </div>
 
     <div class="split-layout">
-      <!-- Left: Add form -->
       <div>
         <button class="add-btn" id="add-btn" onclick="toggleBoothForm()">
           <span class="material-symbols-outlined" style="font-size:18px">add</span>
@@ -790,7 +917,6 @@ async function renderBoothPage() {
         </div>
       </div>
 
-      <!-- Right: Recent booth leads -->
       <div>
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
           <div style="font-size:14px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:6px">
@@ -821,7 +947,7 @@ function renderBoothList() {
 }
 
 /* ════════════════════════════════════
-   FORM INTERACTIONS (Public Form)
+   FORM INTERACTIONS
 ════════════════════════════════════ */
 function selectSource(el, name, showsSalesperson) {
   const wasSelected = el.classList.contains('selected');
@@ -880,6 +1006,25 @@ function toggleChip(el, group) {
 /* ════════════════════════════════════
    PUBLIC FORM SUBMIT
 ════════════════════════════════════ */
+function scoreLead(data, cfg) {
+  const rules = cfg.scoringRules || BHARATTEX_DEFAULT.scoringRules || {};
+  const weights = rules.weights || {};
+  const thresholds = rules.thresholds || { hot: 70, warm: 35 };
+  let score = 0;
+  const fabrics = String(data.fabric || '').split(',').map(x => x.trim()).filter(Boolean);
+  const apparel = String(data.apparel || '').split(',').map(x => x.trim()).filter(Boolean);
+  if (fabrics.length) score += weights.fabricInterest || 0;
+  if (apparel.length) score += weights.apparelInterest || 0;
+  if (String(data.msg || '').trim().length >= 20) score += weights.message || 0;
+  if (String(data.source || '').toLowerCase().includes('booth')) score += weights.boothSource || 0;
+  if (String(data.salesperson || '').trim()) score += weights.salesperson || 0;
+  if (String(data.company || '').trim()) score += weights.company || 0;
+  if (String(data.email || '').trim()) score += weights.email || 0;
+  score = Math.min(100, score);
+  const temp = score >= thresholds.hot ? 'Hot' : score >= thresholds.warm ? 'Warm' : 'Cold';
+  return { score, temp };
+}
+
 async function submitPublicForm() {
   const name    = document.getElementById('f-name').value.trim();
   const email   = document.getElementById('f-email').value.trim();
@@ -894,19 +1039,23 @@ async function submitPublicForm() {
   const otherText = document.getElementById('f-source-other')?.value.trim() || '';
   const source = (selectedSource === 'Other' && otherText) ? otherText : selectedSource;
 
-  const defaultPriority = cfg.priorities.find(p => p.default)?.value || cfg.priorities[0].value;
-
-  await saveLeadToProject(cfg.key, makeLead({
+  const leadData = {
     name, email, company,
     country:    document.getElementById('f-country').value.trim(),
     fabric:     selectedFabrics.join(', '),
     apparel:    selectedApparel.join(', '),
     msg:        document.getElementById('f-msg').value.trim(),
     source, salesperson,
-    priority:   defaultPriority,
-    autoTemp:   defaultPriority,
-    manualTemp: '',
     note: '',
+  };
+  const autoScore = scoreLead(leadData, cfg);
+
+  await saveLeadToProject(cfg.key, makeLead({
+    ...leadData,
+    priority:   autoScore.temp,
+    autoTemp:   autoScore.temp,
+    leadScore:  autoScore.score,
+    manualTemp: '',
   }));
 
   sendBrevoEmail(name, email, cfg);
@@ -936,7 +1085,7 @@ async function saveBoothLead() {
   const defaultPriority = cfg.priorities.find(p => p.default)?.value || cfg.priorities[0].value;
   const priority = priorityEl ? priorityEl.value : defaultPriority;
 
-  await saveLeadToProject(cfg.key, makeLead({
+  const leadData = {
     name,
     company:    document.getElementById('b-company').value.trim(),
     email:      document.getElementById('b-email').value.trim(),
@@ -945,8 +1094,16 @@ async function saveBoothLead() {
     apparel: '', msg: '',
     source:     'Booth',
     salesperson: document.getElementById('b-sales').value.trim(),
-    priority, autoTemp: priority, manualTemp: '',
     note:       document.getElementById('b-note').value.trim(),
+  };
+  const autoScore = scoreLead(leadData, cfg);
+
+  await saveLeadToProject(cfg.key, makeLead({
+    ...leadData,
+    priority,
+    autoTemp: autoScore.temp,
+    leadScore: autoScore.score,
+    manualTemp: priority,
   }));
 
   ['b-name','b-company','b-email','b-country','b-sales','b-note'].forEach(id => {
@@ -994,6 +1151,10 @@ function leadHTML(l, cfg) {
     ? `<span class="badge badge-amber" title="Manual override">✏️ ${esc(l.manualTemp)}</span>`
     : '';
 
+  const scoreBadge = Number.isFinite(Number(l.leadScore))
+    ? `<span class="badge badge-gray">Score ${Number(l.leadScore)}</span>`
+    : '';
+
   const priorityOptions = cfg.priorities.map(p =>
     `<option${(l.manualTemp || l.priority) === p.value ? ' selected' : ''} value="${esc(p.value)}">${p.label}</option>`
   ).join('');
@@ -1013,7 +1174,7 @@ function leadHTML(l, cfg) {
       </div>
       <select class="priority-select" onchange="updateLeadTemp('${key}',this.value)">${priorityOptions}</select>
     </div>
-    <div class="badges">${fabricBadges}${appBadge}<span class="badge ${srcClass}">${esc(l.source)}</span>${manualIndicator || '<span class="badge ' + pClass + '">' + esc(temp) + '</span>'}${salesBadge}</div>
+    <div class="badges">${fabricBadges}${appBadge}<span class="badge ${srcClass}">${esc(l.source)}</span>${manualIndicator || '<span class="badge ' + pClass + '">' + esc(temp) + '</span>'}${scoreBadge}${salesBadge}</div>
     ${noteRow}
     <div class="note-area">
       <input class="note-input" id="note-${key}" placeholder="Add note..." value="${esc(l.note || '')}">
@@ -1153,7 +1314,6 @@ window.renderBoothList = renderBoothList;
 ════════════════════════════════════ */
 window.addEventListener('hashchange', route);
 
-// Handle initial load — if no hash, go to home
 if (!location.hash || location.hash === '#' || location.hash === '#/') {
   location.hash = '/';
 }
