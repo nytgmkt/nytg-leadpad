@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
 <style>
-/* ── Reset & Tokens ── */
+/* Reset & Tokens */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
   --primary:#004AC6;--primary-dk:#003A9E;--primary-lt:#EEF2FF;--primary-mid:rgba(0,74,198,.12);
@@ -25,11 +25,11 @@
 body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;overflow-x:hidden}
 .material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;vertical-align:middle;line-height:1}
 
-/* ── App Shell ── */
+/* App Shell */
 .app{display:flex;min-height:100vh}
 .main{flex:1;display:flex;flex-direction:column;min-width:0}
 
-/* ── Sidebar ── */
+/* Sidebar */
 .sidebar{
   width:var(--sidebar-w);flex-shrink:0;
   background:var(--surface);border-right:1px solid var(--border);
@@ -65,7 +65,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);min-
 .sidebar-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:199;opacity:0;pointer-events:none;transition:opacity .25s}
 .sidebar-overlay.open{opacity:1;pointer-events:all}
 
-/* ── Topbar ── */
+/* Topbar */
 .topbar{
   position:sticky;top:0;z-index:100;
   height:56px;display:flex;align-items:center;gap:12px;padding:0 20px;
@@ -92,19 +92,19 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ink);min-
 .role-creator{background:var(--primary-lt);color:var(--primary)}
 .role-user{background:var(--teal-lt);color:var(--teal-dk)}
 
-/* ── Page Content ── */
-.page-content{flex:1;padding:20px;max-width:1200px;width:100%;margin:0 auto;}
+/* Page Content */
+.page-content{flex:1;padding:20px;max-width:1200px;width:100%;margin:0 auto}
 .page{display:none}
 .page.active{display:block}
 
-/* ── Cards ── */
+/* Cards */
 .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);padding:20px;margin-bottom:16px}
 .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
 .card-header h4{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;color:var(--ink)}
 .card-header h4 .material-symbols-outlined{font-size:18px;color:var(--primary)}
 .card-tag{font-size:10px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--surface2);border:1px solid var(--border);padding:3px 8px;border-radius:20px}
 
-/* ── Forms ── */
+/* Forms */
 .field{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}
 .field label{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
 input,select,textarea{
@@ -118,7 +118,7 @@ textarea{resize:vertical;min-height:80px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
 
-/* ── Chips ── */
+/* Chips */
 .chip-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
 .chip{
   padding:5px 14px;border:1.5px solid var(--border);border-radius:20px;
@@ -128,7 +128,7 @@ textarea{resize:vertical;min-height:80px}
 .chip:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-lt)}
 .chip.selected{border-color:var(--primary);background:var(--primary);color:#fff}
 
-/* ── Fabric Cards ── */
+/* Fabric Cards */
 .fabric-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:6px}
 .fabric-card{
   border:1.5px solid var(--border);border-radius:var(--radius-lg);
@@ -141,7 +141,7 @@ textarea{resize:vertical;min-height:80px}
 .fc-name{font-size:13px;font-weight:700;color:var(--ink)}
 .fc-sub{font-size:11px;color:var(--muted);margin-top:2px}
 
-/* ── Priority Radios ── */
+/* Priority Radios */
 .priority-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
 .priority-opt{position:relative}
 .priority-opt input{position:absolute;opacity:0;width:0;height:0}
@@ -155,7 +155,7 @@ textarea{resize:vertical;min-height:80px}
 .priority-opt input:checked+label.p-warm{border-color:var(--warm);background:#FFFBEB;color:var(--warm)}
 .priority-opt input:checked+label.p-cold{border-color:var(--cold);background:#EFF6FF;color:var(--cold)}
 
-/* ── Buttons ── */
+/* Buttons */
 .btn-primary{
   width:100%;padding:11px 20px;background:var(--primary);
   color:#fff;border:none;border-radius:var(--radius);cursor:pointer;
@@ -180,7 +180,7 @@ textarea{resize:vertical;min-height:80px}
 }
 .btn-ghost:hover{color:var(--ink)}
 
-/* ── Dashboard ── */
+/* Dashboard */
 .section-head{margin-bottom:20px}
 .section-head h2{font-size:22px;font-weight:800;letter-spacing:-.02em}
 .section-head p{color:var(--muted);font-size:14px;margin-top:4px}
@@ -198,6 +198,26 @@ textarea{resize:vertical;min-height:80px}
   color:var(--muted);transition:all .15s;
 }
 .filter-pill:hover,.filter-pill.on{border-color:var(--primary);background:var(--primary-lt);color:var(--primary)}
+.dashboard-widgets{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-bottom:16px}
+.dash-widget{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:14px 16px;min-width:0;
+}
+.dash-widget-wide{grid-column:1/-1}
+.widget-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
+.widget-title{font-size:13px;font-weight:800;color:var(--ink)}
+.widget-sub{font-size:11px;color:var(--muted);font-weight:600}
+.bar-list{display:flex;flex-direction:column;gap:9px}
+.bar-row{display:grid;grid-template-columns:minmax(0,1fr) 42px;gap:10px;align-items:center}
+.bar-label{font-size:12px;font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar-track{height:8px;border-radius:99px;background:var(--surface2);overflow:hidden;margin-top:4px}
+.bar-fill{height:100%;border-radius:99px;background:var(--primary)}
+.bar-value{font-family:'DM Mono',monospace;font-size:12px;font-weight:700;color:var(--muted);text-align:right}
+.timeline-bars{display:grid;grid-template-columns:repeat(7,minmax(22px,1fr));gap:8px;align-items:end;min-height:118px}
+.timeline-day{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
+.timeline-bar{width:100%;min-height:4px;border-radius:6px 6px 2px 2px;background:var(--teal);transition:height .2s ease}
+.timeline-count{font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:var(--ink)}
+.timeline-label{font-size:10px;color:var(--muted);white-space:nowrap}
 .lead-list{display:flex;flex-direction:column;gap:10px}
 .lead-card{
   background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
@@ -231,11 +251,11 @@ textarea{resize:vertical;min-height:80px}
 .empty{text-align:center;padding:40px 20px;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:8px}
 .empty .material-symbols-outlined{font-size:36px;opacity:.4}
 
-/* ── Salesperson toggle ── */
+/* Salesperson toggle */
 .salesperson-field{display:none}
 .salesperson-field.show{display:block}
 
-/* ── Hero Banner ── */
+/* Hero Banner */
 .hero-banner{
   position:relative;border-radius:var(--radius-xl);overflow:hidden;
   background:linear-gradient(135deg,var(--primary) 0%,#1E40AF 100%);
@@ -249,13 +269,13 @@ textarea{resize:vertical;min-height:80px}
 .hero-banner-content h3{font-size:22px;font-weight:800;margin-bottom:6px;letter-spacing:-.02em}
 .hero-banner-content p{font-size:14px;opacity:.85;line-height:1.6}
 
-/* ── Success ── */
+/* Success */
 .success-box{text-align:center;padding:20px 0}
 .success-icon{font-size:48px;display:block;margin-bottom:12px}
 .success-box h3{font-size:22px;font-weight:800;margin-bottom:8px}
 .success-box p{color:var(--muted);line-height:1.7}
 
-/* ── Password screen ── */
+/* Password screen */
 .pw-screen{display:flex;align-items:center;justify-content:center;padding:40px 20px}
 .pw-box{
   background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);
@@ -271,7 +291,7 @@ textarea{resize:vertical;min-height:80px}
 .pw-box input:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-mid)}
 .pw-error{color:var(--hot);font-size:12px;font-weight:600;margin-bottom:10px;display:none}
 
-/* ── Hub page (project list) ── */
+/* Hub page */
 .hub-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;margin-top:20px}
 .project-card{
   background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-xl);
@@ -286,7 +306,7 @@ textarea{resize:vertical;min-height:80px}
 .project-card-stats{display:flex;gap:8px}
 .project-stat{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;background:var(--surface2);border:1px solid var(--border);color:var(--muted)}
 
-/* ── Home / role selector ── */
+/* Home / role selector */
 .home-screen{min-height:80vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;text-align:center}
 .home-logo{font-size:48px;margin-bottom:16px}
 .home-title{font-size:28px;font-weight:900;letter-spacing:-.03em;margin-bottom:8px}
@@ -302,7 +322,7 @@ textarea{resize:vertical;min-height:80px}
 .role-card-label{font-size:14px;font-weight:700}
 .role-card-desc{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.4}
 
-/* ── Booth add btn ── */
+/* Booth add btn */
 .add-btn{
   width:100%;padding:14px;border:1.5px dashed var(--border);border-radius:var(--radius-xl);
   background:var(--surface);cursor:pointer;font-size:14px;font-weight:600;
@@ -311,16 +331,17 @@ textarea{resize:vertical;min-height:80px}
 }
 .add-btn:hover{border-color:var(--primary);background:var(--primary-lt)}
 
-/* ── Split layout ── */
+/* Split layout */
 .split-layout{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 
-/* ── Responsive ── */
+/* Responsive */
 @media(max-width:1024px){
   .sidebar{transform:translateX(calc(-1 * var(--sidebar-w)))}
   .sidebar.open{transform:translateX(0)}
   .topbar-hamburger{display:flex}
   .main{margin-left:0!important}
   .split-layout{grid-template-columns:1fr}
+  .dashboard-widgets{grid-template-columns:1fr}
   .stats-row{grid-template-columns:repeat(2,1fr)}
 }
 @media(max-width:640px){
@@ -342,20 +363,15 @@ textarea{resize:vertical;min-height:80px}
 </head>
 <body>
 
-<!-- SIDEBAR OVERLAY (mobile) -->
 <div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
 
-<!-- APP WRAPPER -->
 <div class="app">
-
-  <!-- ════════ SIDEBAR ════════ -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-brand">
       <div class="sidebar-brand-title" id="sidebar-brand-title">NYTG LeadPad</div>
       <div class="sidebar-brand-sub" id="sidebar-brand-sub">Lead Management</div>
     </div>
 
-    <!-- Booth sync badge (shown when logged in) -->
     <div class="sidebar-booth-badge" id="sidebar-booth-badge" style="display:none">
       <span class="material-symbols-outlined">store</span>
       <div>
@@ -365,19 +381,14 @@ textarea{resize:vertical;min-height:80px}
       <div class="sidebar-booth-badge-dot"></div>
     </div>
 
-    <div class="sidebar-nav" id="sidebar-nav" style="padding-top:12px">
-      <!-- Populated by router -->
-    </div>
+    <div class="sidebar-nav" id="sidebar-nav" style="padding-top:12px"></div>
 
     <div class="sidebar-footer">
       <div class="sidebar-footer-text" id="sidebar-footer-text">NYTG LeadPad v2</div>
     </div>
   </aside>
 
-  <!-- ════════ MAIN ════════ -->
   <div class="main">
-
-    <!-- TOP BAR -->
     <header class="topbar">
       <button class="topbar-hamburger" onclick="toggleSidebar()" aria-label="Menu">
         <span class="material-symbols-outlined" style="font-size:20px">menu</span>
@@ -392,17 +403,15 @@ textarea{resize:vertical;min-height:80px}
       </div>
     </header>
 
-    <!-- PAGE CONTENT (router renders here) -->
     <div class="page-content" id="page-content">
       <div style="text-align:center;padding:60px 20px;color:var(--muted)">
         <span class="material-symbols-outlined" style="font-size:40px;opacity:.4">hourglass_top</span>
         <div style="margin-top:8px;font-size:14px">Loading…</div>
       </div>
     </div>
+  </div>
+</div>
 
-  </div><!-- /main -->
-</div><!-- /app -->
-
-<script type="module" src="leadpad.js?v=8"></script>
+<script type="module" src="leadpad.js?v=9"></script>
 </body>
 </html>
