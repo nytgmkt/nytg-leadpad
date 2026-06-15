@@ -192,23 +192,9 @@ function subscribeLeads(key) {
     if (hash.includes('/booth')) renderBoothList();
   });
 }
-    console.log('[LeadPad debug] rebuilt leads length:', leads.length);
-    console.log('[LeadPad debug] rebuilt leads:', leads);
-
-    updateTopbarCount();
-    const hash = location.hash;
-    if (hash.includes('/dash')) renderDashList();
-    if (hash.includes('/booth')) renderBoothList();
-  }, (error) => {
-    console.error('[LeadPad debug] onValue error:', error);
-  });
-}
 
 async function saveLeadToProject(key, leadData) {
   await push(ref(db, `projects/${key}/leads`), leadData);
-}
-async function updateLeadInProject(key, leadKey, fields) {
-  await update(ref(db, `projects/${key}/leads/${leadKey}`), fields);
 }
 
 /* ════════════════════════════════════
