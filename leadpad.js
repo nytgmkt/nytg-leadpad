@@ -180,16 +180,33 @@ async function loadAllProjects() {
 
 function subscribeLeads(key) {
   if (leadsListener) leadsListener();
-  const leadsRef = ref(db, `projects/${key}/leads`);
+
+  const path = `projects/${key}/leads`;
+  console.log('[LeadPad debug] subscribeLeads path:', path);
+
+  const leadsRef = ref(db, path);
   leadsListener = onValue(leadsRef, (snap) => {
+    console.log('[LeadPad debug] snapshot exists:', snap.exists());
+    console.log('[LeadPad debug] snapshot size:', snap.size);
+    console.log('[LeadPad debug] snapshot raw:', snap.val());
+
     leads = [];
     if (snap.exists()) {
-      snap.forEach(child => leads.push({ _key: child.key, ...child.val() }));
+      snap.forEach(child => {
+        console.log('[LeadPad debug] child:', child.key, child.val());
+        leads.push({ _key: child.key, ...child.val() });
+      });
     }
+
+    console.log('[LeadPad debug] rebuilt leads length:', leads.length);
+    console.log('[LeadPad debug] rebuilt leads:', leads);
+
     updateTopbarCount();
     const hash = location.hash;
     if (hash.includes('/dash')) renderDashList();
     if (hash.includes('/booth')) renderBoothList();
+  }, (error) => {
+    console.error('[LeadPad debug] onValue error:', error);
   });
 }
 
