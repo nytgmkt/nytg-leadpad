@@ -193,11 +193,21 @@ function subscribeLeads(key) {
   });
 }
 async function loadLeadsOnce(key) {
-  const snap = await get(ref(db, `projects/${key}/leads`));
+  const path = `projects/${key}/leads`;
+  console.log('[LeadPad debug] loadLeadsOnce path:', path);
+
+  const snap = await get(ref(db, path));
+  console.log('[LeadPad debug] loadLeadsOnce exists:', snap.exists());
+  console.log('[LeadPad debug] loadLeadsOnce size:', snap.size);
+  console.log('[LeadPad debug] loadLeadsOnce raw:', snap.val());
+
   leads = [];
   if (snap.exists()) {
     snap.forEach(child => leads.push({ _key: child.key, ...child.val() }));
   }
+
+  console.log('[LeadPad debug] loadLeadsOnce leads length:', leads.length);
+
   updateTopbarCount();
   renderDashList();
 }
