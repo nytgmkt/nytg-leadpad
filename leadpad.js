@@ -180,18 +180,26 @@ async function loadAllProjects() {
 
 function subscribeLeads(key) {
   if (leadsListener) leadsListener();
+
   const leadsRef = ref(db, `projects/${key}/leads`);
+
   leadsListener = onValue(leadsRef, (snap) => {
     leads = [];
+
     if (snap.exists()) {
-      snap.forEach(child => leads.push({ _key: child.key, ...child.val() }));
+      snap.forEach(child => {
+        leads.push({ _key: child.key, ...child.val() });
+      });
     }
+
     updateTopbarCount();
+
     const hash = location.hash;
     if (hash.includes('/dash')) renderDashList();
     if (hash.includes('/booth')) renderBoothList();
   });
 }
+
 async function loadLeadsOnce(key) {
   const path = `projects/${key}/leads`;
   console.log('[LeadPad debug] loadLeadsOnce path:', path);
@@ -202,8 +210,11 @@ async function loadLeadsOnce(key) {
   console.log('[LeadPad debug] loadLeadsOnce raw:', snap.val());
 
   leads = [];
+
   if (snap.exists()) {
-    snap.forEach(child => leads.push({ _key: child.key, ...child.val() }));
+    snap.forEach(child => {
+      leads.push({ _key: child.key, ...child.val() });
+    });
   }
 
   console.log('[LeadPad debug] loadLeadsOnce leads length:', leads.length);
@@ -211,6 +222,7 @@ async function loadLeadsOnce(key) {
   updateTopbarCount();
   renderDashList();
 }
+
 async function saveLeadToProject(key, leadData) {
   await push(ref(db, `projects/${key}/leads`), leadData);
 }
@@ -218,7 +230,6 @@ async function saveLeadToProject(key, leadData) {
 async function updateLeadInProject(key, leadKey, fields) {
   await update(ref(db, `projects/${key}/leads/${leadKey}`), fields);
 }
-
 /* ════════════════════════════════════
    NAVIGATION HELPERS
 ════════════════════════════════════ */
