@@ -215,7 +215,24 @@ async function loadLeadsOnce(key) {
 }
 
 async function saveLeadToProject(key, leadData) {
-  await push(ref(db, `projects/${key}/leads`), leadData);
+  const response = await fetch("https://submitlead-qba6lqpwsa-as.a.run.app", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      projectKey: key,
+      lead: leadData,
+    }),
+  });
+
+  const result = await response.json();
+
+  if (!response.ok || !result.ok) {
+    throw new Error(result.error || "Could not submit lead");
+  }
+
+  return result.key;
 }
 
 async function updateLeadInProject(key, leadKey, fields) {
