@@ -210,6 +210,14 @@ function subscribeLeads(key) {
   });
 }
 
+async function saveLeadToProject(key, leadData) {
+  await push(ref(db, `projects/${key}/leads`), leadData);
+}
+
+async function updateLeadInProject(key, leadKey, fields) {
+  await update(ref(db, `projects/${key}/leads/${leadKey}`), fields);
+}
+
 /* ════════════════════════════════════
    NAVIGATION HELPERS
 ════════════════════════════════════ */
