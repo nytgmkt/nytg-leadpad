@@ -192,7 +192,15 @@ function subscribeLeads(key) {
     if (hash.includes('/booth')) renderBoothList();
   });
 }
-
+async function loadLeadsOnce(key) {
+  const snap = await get(ref(db, `projects/${key}/leads`));
+  leads = [];
+  if (snap.exists()) {
+    snap.forEach(child => leads.push({ _key: child.key, ...child.val() }));
+  }
+  updateTopbarCount();
+  renderDashList();
+}
 async function saveLeadToProject(key, leadData) {
   await push(ref(db, `projects/${key}/leads`), leadData);
 }
@@ -626,7 +634,6 @@ async function renderDashPage() {
   setTopbarTitle('Lead Dashboard');
   updateSidebarForProject();
   updateRoleBadge();
-  subscribeLeads(cfg.key);
 
   const filterPills = [
     { label: 'All', value: 'All', on: true },
@@ -676,6 +683,8 @@ async function renderDashPage() {
   `);
 
   activeFilter = 'All';
+  await loadLeadsOnce(cfg.key);
+  subscribeLeads(cfg.key);
 }
 
 function renderDashList() {
