@@ -201,14 +201,26 @@ function subscribeLeads(key) {
 }
 
 async function loadLeadsOnce(key) {
-  const snap = await get(ref(db, `projects/${key}/leads`));
-  leads = [];
+  const password = currentProject?.adminPassword || '';
 
-  if (snap.exists()) {
-    snap.forEach(child => {
-      leads.push({ _key: child.key, ...child.val() });
-    });
+  const response = await fetch("https://asia-southeast1-nytg-leadpad.cloudfunctions.net/getDashboardLeads", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      projectKey: key,
+      password,
+    }),
+  });
+
+  const result = await response.json();
+
+  if (!response.ok || !result.ok) {
+    throw new Error(result.error || "Could not load dashboard leads");
   }
+
+  leads = result.leads || [];
 
   updateTopbarCount();
   renderDashList();
