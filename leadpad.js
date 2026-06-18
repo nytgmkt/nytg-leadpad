@@ -411,8 +411,12 @@ async function tryLogin(password, redirectKey) {
       })
     );
 
-    window.location.href = `#/${projectKey}`;
-    return true;
+const nextPath = result.role === 'admin'
+  ? `#/${projectKey}/dash`
+  : `#/${projectKey}/booth`;
+
+window.location.href = nextPath;
+return true;
   } catch (error) {
     console.error('Login failed', error);
     return false;
