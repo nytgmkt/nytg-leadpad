@@ -197,7 +197,13 @@ function subscribeLeads(key) {
     if (hash.includes('/booth')) renderBoothList();
   });
 }
-
+function getSession() {
+  try {
+    return session || JSON.parse(sessionStorage.getItem('leadpadAccess') || 'null') || {};
+  } catch (error) {
+    return session || {};
+  }
+}
 async function loadLeadsOnce(key) {
   const session = getSession();
   const password = session?.password || '';
