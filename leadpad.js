@@ -372,19 +372,26 @@ function updateRoleBadge() {
 ════════════════════════════════════ */
 async function tryLogin(password, redirectKey) {
   const enteredPassword = String(password || '').trim();
+  const projectKey = redirectKey || currentProject?.key || 'bharattex2026';
+  const verifyAccessUrl = currentProject?.verifyAccessUrl || BHARATTEX_DEFAULT.verifyAccessUrl;
 
   if (!enteredPassword) {
     return false;
   }
 
+  if (!verifyAccessUrl) {
+    console.error('Missing verifyAccessUrl');
+    return false;
+  }
+
   try {
-    const response = await fetch(currentProject.verifyAccessUrl, {
+    const response = await fetch(verifyAccessUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        projectKey: currentProject.key,
+        projectKey,
         password: enteredPassword,
       }),
     });
@@ -398,13 +405,13 @@ async function tryLogin(password, redirectKey) {
     sessionStorage.setItem(
       'leadpadAccess',
       JSON.stringify({
-        projectKey: currentProject.key,
+        projectKey,
         role: result.role,
         password: enteredPassword,
       })
     );
 
-    window.location.href = `#/${redirectKey}`;
+    window.location.href = `#/${projectKey}`;
     return true;
   } catch (error) {
     console.error('Login failed', error);
