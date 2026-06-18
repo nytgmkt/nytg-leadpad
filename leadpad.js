@@ -872,6 +872,10 @@ function lastSevenDays() {
 }
 
 function leadDateKey(lead) {
+  if (lead.createdAt) {
+    return dateKey(new Date(Number(lead.createdAt)));
+  }
+
   const parsed = parseLeadTime(lead.time);
   return parsed ? dateKey(parsed) : '';
 }
