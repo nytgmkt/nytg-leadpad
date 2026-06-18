@@ -199,7 +199,14 @@ function subscribeLeads(key) {
 }
 function getSession() {
   try {
-    return session || JSON.parse(sessionStorage.getItem('leadpadAccess') || 'null') || {};
+    const storedSession = JSON.parse(sessionStorage.getItem('leadpadAccess') || 'null');
+
+    if (storedSession && storedSession.role && storedSession.projectKey) {
+      session = storedSession;
+      return storedSession;
+    }
+
+    return session || {};
   } catch (error) {
     return session || {};
   }
