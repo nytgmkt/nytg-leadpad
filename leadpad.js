@@ -1323,6 +1323,11 @@ document.addEventListener('keydown', e => {
 /* ════════════════════════════════════
    EXPOSE GLOBALS (type="module" requirement)
 ════════════════════════════════════ */
+function logout() {
+  sessionStorage.removeItem('leadpadAccess');
+  window.location.href = '#/login';
+  window.location.reload();
+}
 window.toggleSidebar   = toggleSidebar;
 window.closeSidebar    = closeSidebar;
 window.navigate        = navigate;
