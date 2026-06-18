@@ -314,7 +314,7 @@ function updateSidebarForProject() {
     items.push({ icon: 'grid_view', label: 'All Projects', onclick: `navigate('/hub')` });
     items.push({ icon: 'download', label: 'Export CSV', onclick: `exportCSV()` });
     items.push({ divider: true });
-    items.push({ icon: 'lock', label: 'Log out', onclick: `logOut()` });
+    items.push({ icon: 'lock', label: 'Log out', onclick: `logout()` });
   } else {
     items.push({ divider: true });
     items.push({ icon: 'admin_panel_settings', label: 'Team login', onclick: `navigate('/login')` });
@@ -332,7 +332,7 @@ function updateSidebarGeneric() {
   if (session.role) {
     items.push({ icon: 'grid_view', label: 'All Projects', onclick: `navigate('/hub')`, active: location.hash.includes('hub') });
     items.push({ divider: true });
-    items.push({ icon: 'lock', label: 'Log out', onclick: `logOut()` });
+    items.push({ icon: 'lock', label: 'Log out', onclick: `logout()` });
   } else {
     items.push({ icon: 'home', label: 'Home', onclick: `navigate('/')`, active: location.hash === '#/' || location.hash === '' });
     items.push({ icon: 'admin_panel_settings', label: 'Team login', onclick: `navigate('/login')` });
@@ -1331,7 +1331,7 @@ window.doLogin         = () => {
   const pw = document.getElementById('pw-input')?.value || '';
   tryLogin(pw, session.projectKey || 'bharattex2026');
 };
-window.logOut          = logOut;
+window.logout          = logout;
 window.selectSource    = selectSource;
 window.toggleFabric    = toggleFabric;
 window.toggleChip      = toggleChip;
