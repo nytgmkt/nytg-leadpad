@@ -98,6 +98,7 @@ function saveSession() {
    HASH ROUTER
 ════════════════════════════════════ */
 async function route() {
+session = getSession();
   const hash = location.hash.replace(/^#\/?/, '');
   const parts = hash.split('/').filter(Boolean);
 
