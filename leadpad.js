@@ -402,14 +402,16 @@ async function tryLogin(password, redirectKey) {
       return false;
     }
 
-    sessionStorage.setItem(
-      'leadpadAccess',
-      JSON.stringify({
-        projectKey,
-        role: result.role,
-        password: enteredPassword,
-      })
-    );
+session = {
+  projectKey,
+  role: result.role,
+  password: enteredPassword,
+};
+
+sessionStorage.setItem(
+  'leadpadAccess',
+  JSON.stringify(session)
+);
 
 const nextPath = result.role === 'admin'
   ? `#/${projectKey}/dash`
