@@ -26,8 +26,7 @@ const BHARATTEX_DEFAULT = {
   orgName: 'NYTG',
   venueLine: 'Global Textile Expo · Hall 5',
   boothId: 'NYTG-BT26',
-  adminPassword: 'nytg2026',
-  creatorPassword: 'nytgteam',
+verifyAccessUrl: "https://asia-southeast1-nytg-leadpad.cloudfunctions.net/verifyAccess",
   fabrics: [
     { name: 'Elitech 360',     icon: '⚡', sub: 'Stretch & durability',  badgeClass: 'badge-teal'  },
     { name: 'Dry-Tech',        icon: '💧', sub: 'Moisture management',   badgeClass: 'badge-blue'  },
@@ -200,7 +199,8 @@ function subscribeLeads(key) {
 }
 
 async function loadLeadsOnce(key) {
-  const password = currentProject?.adminPassword || '';
+  const session = getSession();
+  const password = session?.password || '';
 
   const response = await fetch("https://asia-southeast1-nytg-leadpad.cloudfunctions.net/getDashboardLeads", {
     method: "POST",
@@ -370,48 +370,47 @@ function updateRoleBadge() {
 /* ════════════════════════════════════
    AUTH
 ════════════════════════════════════ */
-function tryLogin(password, redirectKey) {
-  if (!currentProject && redirectKey) {
-    loadProjectConfig(redirectKey).then(cfg => {
-      if (!cfg) { showToast('Project not found', 'error'); return; }
-      currentProject = { key: redirectKey, ...cfg };
-      tryLogin(password, redirectKey);
+async function tryLogin(password, redirectKey) {
+  const enteredPassword = String(password || '').trim();
+
+  if (!enteredPassword) {
+    return false;
+  }
+
+  try {
+    const response = await fetch(currentProject.verifyAccessUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        projectKey: currentProject.key,
+        password: enteredPassword,
+      }),
     });
-    return;
-  }
 
-  if (currentProject) {
-    if (password === currentProject.adminPassword) {
-      session = { role: 'admin', projectKey: currentProject.key };
-      saveSession(); afterLogin(); return;
+    const result = await response.json().catch(() => null);
+
+    if (!response.ok || !result || result.ok !== true || !result.role) {
+      return false;
     }
-    if (password === currentProject.creatorPassword) {
-      session = { role: 'creator', projectKey: currentProject.key };
-      saveSession(); afterLogin(); return;
-    }
+
+    sessionStorage.setItem(
+      'leadpadAccess',
+      JSON.stringify({
+        projectKey: currentProject.key,
+        role: result.role,
+        password: enteredPassword,
+      })
+    );
+
+    window.location.href = `#/${redirectKey}`;
+    return true;
+  } catch (error) {
+    console.error('Login failed', error);
+    return false;
   }
-
-  document.getElementById('pw-error').style.display = 'block';
-  document.getElementById('pw-input').value = '';
-  document.getElementById('pw-input').focus();
 }
-
-function afterLogin() {
-  updateRoleBadge();
-  const dest = currentProject ? `/${currentProject.key}/dash` : '/hub';
-  navigate(dest);
-}
-
-function logOut() {
-  session = { role: null, projectKey: null };
-  saveSession();
-  if (leadsListener) { leadsListener(); leadsListener = null; }
-  leads = [];
-  currentProject = null;
-  updateRoleBadge();
-  goHome();
-}
-
 /* ════════════════════════════════════
    PAGE RENDERERS
 ════════════════════════════════════ */
