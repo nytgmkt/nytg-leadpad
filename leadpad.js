@@ -43,7 +43,6 @@ const BHARATTEX_DEFAULT = {
     { label: 'Other' },
   ],
   salespeople: [],
-  brevoApiKey: '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',
   brevoTemplateId: 2,
   scoringRules: {
     thresholds: { hot: 70, warm: 35 },
@@ -1109,7 +1108,6 @@ async function submitPublicForm() {
     manualTemp: '',
   }));
 
-  sendBrevoEmail(name, email, cfg);
 
   document.getElementById('conf-email').textContent = email;
   document.getElementById('form-view').style.display = 'none';
@@ -1274,20 +1272,6 @@ function exportCSV() {
 /* ════════════════════════════════════
    BREVO EMAIL
 ════════════════════════════════════ */
-async function sendBrevoEmail(name, email, cfg) {
-  if (!cfg.brevoApiKey) return;
-  try {
-    await fetch('https://api.brevo.com/v3/smtp/email', {
-      method: 'POST',
-      headers: { 'api-key': cfg.brevoApiKey, 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        to: [{ email, name }],
-        templateId: cfg.brevoTemplateId,
-        params: { NAME: name, EVENT_NAME: cfg.eventName },
-      }),
-    });
-  } catch (_) { /* fire-and-forget */ }
-}
 
 /* ════════════════════════════════════
    HELPERS
