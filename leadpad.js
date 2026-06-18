@@ -414,7 +414,7 @@ async function tryLogin(password, redirectKey) {
 const nextPath = result.role === 'admin'
   ? `#/${projectKey}/dash`
   : `#/${projectKey}/booth`;
-
+console.log('LeadPad login route', result.role, nextPath);
 window.location.href = nextPath;
 return true;
   } catch (error) {
