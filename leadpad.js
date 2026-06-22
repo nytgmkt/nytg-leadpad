@@ -1122,15 +1122,18 @@ async function submitPublicForm() {
   const otherText = document.getElementById('f-source-other')?.value.trim() || '';
   const source = (selectedSource === 'Other' && otherText) ? otherText : selectedSource;
 
-  const leadData = {
-    name, email, company,
-    country:    document.getElementById('f-country').value.trim(),
-    fabric:     selectedFabrics.join(', '),
-    apparel:    selectedApparel.join(', '),
-    msg:        document.getElementById('f-msg').value.trim(),
-    source, salesperson,
-    note: '',
-  };
+const leadData = {
+  name, email, company,
+  country: document.getElementById('f-country').value.trim(),
+  fabric: selectedFabrics.join(', '),
+  fabrics: selectedFabrics,
+  apparel: selectedApparel.join(', '),
+  apparelType: selectedApparel.join(', '),
+  msg: document.getElementById('f-msg').value.trim(),
+  needs: document.getElementById('f-msg').value.trim(),
+  source, salesperson,
+  note: '',
+};
   const autoScore = scoreLead(leadData, cfg);
 
   await saveLeadToProject(cfg.key, makeLead({
