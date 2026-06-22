@@ -214,6 +214,7 @@ function getSession() {
 }
 async function loadLeadsOnce(key) {
   const session = getSession();
+  const token = session?.token || '';
   const password = session?.password || '';
 
   const response = await fetch("https://asia-southeast1-nytg-leadpad.cloudfunctions.net/getDashboardLeads", {
@@ -223,6 +224,7 @@ async function loadLeadsOnce(key) {
     },
     body: JSON.stringify({
       projectKey: key,
+      token,
       password,
     }),
   });
@@ -419,7 +421,8 @@ async function tryLogin(password, redirectKey) {
 session = {
   projectKey,
   role: result.role,
-  password: enteredPassword,
+  token: result.token || '',
+  expiresAt: result.expiresAt || 0,
 };
 
 sessionStorage.setItem(
