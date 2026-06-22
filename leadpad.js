@@ -1286,18 +1286,53 @@ async function saveNote(key) {
 ════════════════════════════════════ */
 function exportCSV() {
   if (!leads.length) { showToast('No leads to export yet.', 'error'); return; }
+
   const cfg = currentProject;
   const headers = ['Name','Company','Email','Country','Source','Salesperson','Fabric','Apparel','Message','Priority','Note','Time'];
+
+  const formatExportTime = (lead) => {
+    if (lead.time) return lead.time;
+    if (lead.createdAt) return new Date(Number(lead.createdAt)).toLocaleString();
+    return '';
+  };
+
+  const formatFabric = (lead) => {
+    if (Array.isArray(lead.fabrics)) return lead.fabrics.join(' / ');
+    return lead.fabric || '';
+  };
+
+  const formatApparel = (lead) => {
+    return lead.apparel || lead.apparelType || '';
+  };
+
+  const formatMessage = (lead) => {
+    return lead.msg || lead.message || lead.needs || '';
+  };
+
   const rows = leads.map(l => {
     const temp = l.manualTemp || l.autoTemp || l.priority;
-    return [l.name,l.company,l.email,l.country,l.source,l.salesperson,l.fabric,l.apparel,l.msg,temp,l.note,l.time]
-      .map(v => `"${(v || '').replace(/"/g,'""')}"`)
+    return [
+      l.name,
+      l.company,
+      l.email,
+      l.country,
+      l.source,
+      l.salesperson,
+      formatFabric(l),
+      formatApparel(l),
+      formatMessage(l),
+      temp,
+      l.note,
+      formatExportTime(l)
+    ]
+      .map(v => `"${String(v || '').replace(/"/g, '""')}"`)
       .join(',');
   });
+
   const csv = [headers.join(','), ...rows].join('\n');
   const a = document.createElement('a');
   a.href = 'data:text/csv;charset=utf-8,\uFEFF' + encodeURIComponent(csv);
-  a.download = `${cfg.orgName}_${cfg.eventName.replace(/\s+/g,'')}_Leads_` + new Date().toISOString().slice(0,10) + '.csv';
+  a.download = `${cfg.orgName}_${cfg.eventName.replace(/\s+/g, '_')}_Leads_` + new Date().toISOString().slice(0,10) + '.csv';
   a.click();
   closeSidebar();
 }
