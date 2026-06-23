@@ -612,7 +612,7 @@ async function renderPublicForm() {
   ];
 
   const chipButton = (group, value) =>
-    `<button class="chip" data-value="${esc(value)}" onclick="this.classList.toggle('active'); if ('${group}' === 'productType' && '${value}' === 'Other') document.getElementById('product-other-field').style.display = this.classList.contains('active') ? 'block' : 'none';">${esc(value)}</button>`;
+    `<button class="chip" data-value="${esc(value)}" onclick="this.classList.toggle('selected'); if ('${group}' === 'productType' && '${value}' === 'Other') document.getElementById('product-other-field').style.display = this.classList.contains('selected') ? 'block' : 'none';">${esc(value)}</button>`;
 
   const propertyHtml = fabricPropertyOptions.map(v => chipButton('fabricProperties', v)).join('');
   const productHtml = productOptions.map(v => chipButton('productType', v)).join('');
@@ -1221,11 +1221,11 @@ async function submitPublicForm() {
   const buyerRoleOther = document.getElementById('f-buyer-role-other')?.value.trim() || '';
   const buyerRole = buyerRoleSelect === 'Other' ? buyerRoleOther : buyerRoleSelect;
 
-  const fabricProperties = Array.from(document.querySelectorAll('#fabric-property-chips .chip.active'))
+  const fabricProperties = Array.from(document.querySelectorAll('#fabric-property-chips .chip.selected'))
     .map(chip => chip.dataset.value || chip.textContent.trim())
     .filter(Boolean);
 
-  const productType = Array.from(document.querySelectorAll('#product-type-chips .chip.active'))
+  const productType = Array.from(document.querySelectorAll('#product-type-chips .chip.selected'))
     .map(chip => chip.dataset.value || chip.textContent.trim())
     .filter(Boolean);
 
