@@ -323,11 +323,13 @@ function updateSidebarForProject() {
     items.push({ label_only: 'Internal' });
     items.push({ icon: 'dashboard', label: 'Dashboard', onclick: `navigate('/${key}/dash')`, active: hash.includes('/dash') });
     items.push({ icon: 'edit_note', label: 'Booth Entry', onclick: `navigate('/${key}/booth')`, active: hash.includes('/booth') });
+
     if (session.role === 'admin') {
       items.push({ icon: 'settings', label: 'Settings', onclick: `navigate('/${key}/settings')`, active: hash.includes('/settings') });
     }
+
     items.push({ divider: true });
-    items.push({ icon: 'grid_view', label: 'All Projects', onclick: `navigate('/hub')` });
+    items.push({ icon: 'grid_view', label: 'All Projects', onclick: `navigate('/hub')`, active: hash.includes('/hub') });
     items.push({ icon: 'download', label: 'Export CSV', onclick: `exportCSV()` });
     items.push({ divider: true });
     items.push({ icon: 'lock', label: 'Log out', onclick: `logout()` });
@@ -527,13 +529,23 @@ async function renderLogin() {
 
 /* ─── HUB ─── */
 async function renderHub() {
-  updateSidebarGeneric();
+  if (!currentProject && session.projectKey) {
+    const cfg = await loadProjectConfig(session.projectKey);
+    if (cfg) currentProject = { key: session.projectKey, ...cfg };
+  }
+
+  if (currentProject) {
+    updateSidebarForProject();
+  } else {
+    updateSidebarGeneric();
+  }
+
   setTopbarTitle('All Projects');
   updateRoleBadge();
 
   setContent(`<div style="text-align:center;padding:40px;color:var(--muted)">
     <span class="material-symbols-outlined" style="font-size:36px;opacity:.4">hourglass_top</span>
-    <div style="margin-top:8px">Loading projects…</div>
+    <div style="margin-top:8px">Loading projects...</div>
   </div>`);
 
   const projects = await loadAllProjects();
