@@ -108,7 +108,7 @@ session = getSession();
   }
 
 if (parts[0] === 'login') {
-  await renderHome();
+  await renderLogin();
   return;
 }
 
@@ -398,6 +398,35 @@ function updateRoleBadge() {
 /* ════════════════════════════════════
    AUTH
 ════════════════════════════════════ */
+async function renderLogin() {
+  currentProject = null;
+  updateSidebarGeneric();
+  setTopbarTitle('Team Login');
+  updateRoleBadge();
+
+  renderPage(`
+    <div class="login-card card">
+      <div class="login-icon">
+        <span class="material-symbols-outlined">shield_person</span>
+      </div>
+      <h2>Team access</h2>
+      <p>Enter your Admin or Creator password to continue.</p>
+
+      <div class="field">
+        <input id="pw-input" type="password" placeholder="Password" autocomplete="current-password"
+          onkeydown="if(event.key === 'Enter') doLogin()">
+      </div>
+
+      <button class="btn-primary" style="width:100%" onclick="doLogin()">
+        Enter
+      </button>
+
+      <button class="btn-link" style="margin-top:16px" onclick="goHome()">
+        Back
+      </button>
+    </div>
+  `, 'Team Login');
+}
 async function tryLogin(password, redirectKey) {
   const enteredPassword = String(password || '').trim();
   const projectKey = redirectKey || currentProject?.key || 'bharattex2026';
