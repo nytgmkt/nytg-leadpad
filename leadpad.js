@@ -149,13 +149,17 @@ session = getSession();
    FIREBASE PROJECT HELPERS
 ════════════════════════════════════ */
 async function loadProjectConfig(key) {
-  const snap = await get(ref(db, `projects/${key}/config`));
-  if (snap.exists()) return snap.val();
+  const settingsSnap = await get(ref(db, `projects/${key}/settings`));
+  if (settingsSnap.exists()) return settingsSnap.val();
+
+  const configSnap = await get(ref(db, `projects/${key}/config`));
+  if (configSnap.exists()) return configSnap.val();
 
   if (key === 'bharattex2026') {
-    await set(ref(db, `projects/bharattex2026/config`), BHARATTEX_DEFAULT);
+    await set(ref(db, 'projects/bharattex2026/settings'), BHARATTEX_DEFAULT);
     return BHARATTEX_DEFAULT;
   }
+
   return null;
 }
 
