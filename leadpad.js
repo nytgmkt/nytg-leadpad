@@ -366,14 +366,16 @@ function updateSidebarGeneric() {
    TOPBAR
 ════════════════════════════════════ */
 function updateTopbarCount() {
-  const el  = document.getElementById('topbar-leads');
+  const el = document.getElementById('topbar-leads');
   const cnt = document.getElementById('topbar-leads-count');
   const hash = location.hash;
-  if (session.role && currentProject && !hash.endsWith(currentProject.key)) {
+
+  if (session.role && currentProject && hash.includes(`/${currentProject.key}`)) {
     el.style.display = 'flex';
     cnt.textContent = leads.length;
   } else {
     el.style.display = 'none';
+    cnt.textContent = '0';
   }
 }
 
