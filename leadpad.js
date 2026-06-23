@@ -589,18 +589,19 @@ async function renderPublicForm() {
     `<button class="chip" onclick="selectSource(this,'${s.label.replace(/'/g,"\\'")}',${s.showsSalesperson ? 'true' : 'false'})">${esc(s.label)}</button>`
   ).join('');
 
-  const fabricPropertyOptions = [
-    'Moisture management',
-    'Stretch & recovery',
-    'Lightweight',
-    'Color fastness',
-    'UV protection',
-    'Odor control',
-    'Sustainability / Recycled',
-    'Durability',
-    'Soft hand feel',
-    'Quick dry',
-  ];
+const fabricPropertyOptions = [
+  'Moisture management',
+  'Stretch & recovery',
+  'Lightweight',
+  'Color fastness',
+  'UV protection',
+  'Odor control',
+  'Sustainability / Recycled',
+  'Durability',
+  'Soft hand feel',
+  'Quick dry',
+  'Other',
+];
 
   const productOptions = [
     'Activewear / Sportswear',
@@ -611,9 +612,8 @@ async function renderPublicForm() {
     'Other',
   ];
 
-  const chipButton = (group, value) =>
-    `<button class="chip" data-value="${esc(value)}" onclick="this.classList.toggle('selected'); if ('${group}' === 'productType' && '${value}' === 'Other') document.getElementById('product-other-field').style.display = this.classList.contains('selected') ? 'block' : 'none';">${esc(value)}</button>`;
-
+const chipButton = (group, value) =>
+  `<button class="chip" data-value="${esc(value)}" onclick="this.classList.toggle('selected'); if ('${group}' === 'productType' && '${value}' === 'Other') document.getElementById('product-other-field').style.display = this.classList.contains('selected') ? 'block' : 'none'; if ('${group}' === 'fabricProperties' && '${value}' === 'Other') document.getElementById('fabric-property-other-field').style.display = this.classList.contains('selected') ? 'block' : 'none';">${esc(value)}</button>`;
   const propertyHtml = fabricPropertyOptions.map(v => chipButton('fabricProperties', v)).join('');
   const productHtml = productOptions.map(v => chipButton('productType', v)).join('');
 
@@ -722,7 +722,10 @@ async function renderPublicForm() {
           <div class="field" style="margin-bottom:6px">
             <label>Fabric properties you need *</label>
           </div>
-          <div class="chip-row" id="fabric-property-chips">${propertyHtml}</div>
+          <div class="chip-row" id="fabric-property-chips">${propertyHtml}</div><div class="field" id="fabric-property-other-field" style="display:none;margin-top:8px;margin-bottom:0">
+  <label>Please specify other fabric property *</label>
+  <input id="f-fabric-property-other" placeholder="Enter fabric property">
+</div>
         </div>
 
         <div style="margin-top:16px">
@@ -753,19 +756,46 @@ async function renderPublicForm() {
               <option>Not sure yet</option>
             </select>
           </div>
-          <div class="field">
-            <label>How would you like us to follow up?</label>
-            <select id="f-follow-up">
-              <option value="">Select follow-up...</option>
-              <option>Email</option>
-              <option>WhatsApp / Line</option>
-              <option>Schedule a meeting</option>
-              <option>No need, just send moodboard</option>
-            </select>
-          </div>
+<div class="field">
+  <label>How would you like us to follow up?</label>
+  <select id="f-follow-up" onchange="const method=this.value; const needsNumber=method==='WhatsApp'||method==='Phone call'; const needsLine=method==='Line'; document.getElementById('follow-up-contact-field').style.display=(needsNumber||needsLine)?'block':'none'; document.getElementById('follow-up-phone-fields').style.display=needsNumber?'grid':'none'; document.getElementById('follow-up-line-field').style.display=needsLine?'block':'none';">
+    <option value="">Select follow-up...</option>
+    <option>Email</option>
+    <option>WhatsApp</option>
+    <option>Line</option>
+    <option>Phone call</option>
+    <option>No need, just send moodboard</option>
+  </select>
+</div>
         </div>
       </div>
-
+      <div id="follow-up-contact-field" style="display:none;margin-top:8px">
+        <div class="grid2" id="follow-up-phone-fields" style="display:none">
+          <div class="field">
+            <label>Country code *</label>
+            <select id="f-follow-up-country-code" onchange="document.getElementById('follow-up-country-code-other-field').style.display = this.value === 'Other' ? 'block' : 'none';">
+              <option value="">Select code...</option>
+              <option value="+91">India +91</option>
+              <option value="+66">Thailand +66</option>
+              <option value="+84">Vietnam +84</option>
+              <option value="+852">Hong Kong +852</option>
+              <option value="+1">USA +1</option>
+              <option value="+880">Bangladesh +880</option>
+              <option value="+62">Indonesia +62</option>
+              <option value="+86">China +86</option>
+              <option value="+60">Malaysia +60</option>
+              <option value="+65">Singapore +65</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>WhatsApp / phone number *</label>
+            <input id="f-follow-up-number" placeholder="Enter number">
+          </div>
+        </div>
+        <div class="field" id="follow-up-country-code-other-field" style="display:none;margin-top:8px">
+          <label>Please specify country code *</label>
+          <input id="f-follow-up-country
       <div class="card">
         <div class="card-header">
           <h4><span class="material-symbols-outlined">chat_bubble</span> Specific preparation</h4>
@@ -1221,9 +1251,14 @@ async function submitPublicForm() {
   const buyerRoleOther = document.getElementById('f-buyer-role-other')?.value.trim() || '';
   const buyerRole = buyerRoleSelect === 'Other' ? buyerRoleOther : buyerRoleSelect;
 
-  const fabricProperties = Array.from(document.querySelectorAll('#fabric-property-chips .chip.selected'))
+  const rawFabricProperties = Array.from(document.querySelectorAll('#fabric-property-chips .chip.selected'))
     .map(chip => chip.dataset.value || chip.textContent.trim())
     .filter(Boolean);
+
+  const fabricPropertiesOther = document.getElementById('f-fabric-property-other')?.value.trim() || '';
+  const fabricProperties = rawFabricProperties
+    .map(value => value === 'Other' && fabricPropertiesOther ? fabricPropertiesOther : value)
+    .filter(value => value !== 'Other' || fabricPropertiesOther);
 
   const productType = Array.from(document.querySelectorAll('#product-type-chips .chip.selected'))
     .map(chip => chip.dataset.value || chip.textContent.trim())
@@ -1237,6 +1272,21 @@ async function submitPublicForm() {
   const estimatedOrderQuantity = document.getElementById('f-estimated-quantity')?.value.trim() || '';
   const followUpPreference = document.getElementById('f-follow-up')?.value.trim() || '';
   const specificRequest = document.getElementById('f-msg')?.value.trim() || '';
+
+  let followUpCountryCode = '';
+  let followUpContact = '';
+
+  if (followUpPreference === 'WhatsApp' || followUpPreference === 'Phone call') {
+    const codeSelect = document.getElementById('f-follow-up-country-code')?.value.trim() || '';
+    const codeOther = document.getElementById('f-follow-up-country-code-other')?.value.trim() || '';
+    followUpCountryCode = codeSelect === 'Other' ? codeOther : codeSelect;
+    const number = document.getElementById('f-follow-up-number')?.value.trim() || '';
+    followUpContact = [followUpCountryCode, number].filter(Boolean).join(' ');
+  }
+
+  if (followUpPreference === 'Line') {
+    followUpContact = document.getElementById('f-follow-up-line')?.value.trim() || '';
+  }
 
   if (!name || !email || !company) {
     showToast('Please fill in Name, Company and Email.', 'error');
@@ -1253,8 +1303,28 @@ async function submitPublicForm() {
     return;
   }
 
-  if (!fabricProperties.length) {
+  if (!rawFabricProperties.length) {
     showToast('Please select at least one fabric property.', 'error');
+    return;
+  }
+
+  if (rawFabricProperties.includes('Other') && !fabricPropertiesOther) {
+    showToast('Please specify other fabric property.', 'error');
+    return;
+  }
+
+  if ((followUpPreference === 'WhatsApp' || followUpPreference === 'Phone call') && !followUpContact) {
+    showToast('Please enter your follow-up contact.', 'error');
+    return;
+  }
+
+  if ((followUpPreference === 'WhatsApp' || followUpPreference === 'Phone call') && !followUpCountryCode) {
+    showToast('Please select country code.', 'error');
+    return;
+  }
+
+  if (followUpPreference === 'Line' && !followUpContact) {
+    showToast('Please enter your Line ID.', 'error');
     return;
   }
 
@@ -1280,9 +1350,12 @@ async function submitPublicForm() {
 
     fabricInterest: selectedFabrics,
     fabricProperties,
+    fabricPropertiesOther,
     productType: finalProductType,
     estimatedOrderQuantity,
     followUpPreference,
+    followUpCountryCode,
+    followUpContact,
     specificRequest,
 
     fabric: selectedFabrics.join(', '),
@@ -1451,7 +1524,25 @@ function exportCSV() {
   if (!leads.length) { showToast('No leads to export yet.', 'error'); return; }
 
   const cfg = currentProject;
-  const headers = ['Name','Company','Email','Country','Source','Salesperson','Fabric','Apparel','Message','Priority','Note','Time'];
+  const headers = [
+    'Name',
+    'Company',
+    'Email',
+    'Country',
+    'Role',
+    'Source',
+    'Salesperson',
+    'Fabric Interest',
+    'Fabric Properties',
+    'Product Type',
+    'Estimated Quantity',
+    'Follow Up Method',
+    'Follow Up Contact',
+    'Specific Request',
+    'Priority',
+    'Note',
+    'Time'
+  ];
 
   const formatExportTime = (lead) => {
     if (lead.time) return lead.time;
@@ -1459,17 +1550,40 @@ function exportCSV() {
     return '';
   };
 
-  const formatFabric = (lead) => {
+  const formatList = (value) => {
+    if (Array.isArray(value)) return value.filter(Boolean).join(' / ');
+    return value || '';
+  };
+
+  const formatFabricInterest = (lead) => {
+    if (Array.isArray(lead.fabricInterest)) return lead.fabricInterest.join(' / ');
     if (Array.isArray(lead.fabrics)) return lead.fabrics.join(' / ');
     return lead.fabric || '';
   };
 
-  const formatApparel = (lead) => {
-    return lead.apparel || lead.apparelType || '';
+  const formatFabricProperties = (lead) => {
+    const props = Array.isArray(lead.fabricProperties)
+      ? [...lead.fabricProperties]
+      : String(lead.fabricProperties || '').split(',').map(v => v.trim()).filter(Boolean);
+
+    if (lead.fabricPropertiesOther && !props.includes(lead.fabricPropertiesOther)) {
+      props.push(lead.fabricPropertiesOther);
+    }
+
+    return props.filter(Boolean).join(' / ');
+  };
+
+  const formatProductType = (lead) => {
+    if (Array.isArray(lead.productType)) return lead.productType.join(' / ');
+    return lead.apparelType || lead.apparel || '';
+  };
+
+  const formatFollowUpContact = (lead) => {
+    return lead.followUpContact || '';
   };
 
   const formatMessage = (lead) => {
-    return lead.msg || lead.message || lead.needs || '';
+    return lead.specificRequest || lead.msg || lead.message || lead.needs || '';
   };
 
   const rows = leads.map(l => {
@@ -1479,10 +1593,15 @@ function exportCSV() {
       l.company,
       l.email,
       l.country,
+      l.buyerRole,
       l.source,
       l.salesperson,
-      formatFabric(l),
-      formatApparel(l),
+      formatFabricInterest(l),
+      formatFabricProperties(l),
+      formatProductType(l),
+      l.estimatedOrderQuantity,
+      l.followUpPreference,
+      formatFollowUpContact(l),
       formatMessage(l),
       temp,
       l.note,
@@ -1499,7 +1618,6 @@ function exportCSV() {
   a.click();
   closeSidebar();
 }
-
 /* ════════════════════════════════════
    BREVO EMAIL
 ════════════════════════════════════ */
