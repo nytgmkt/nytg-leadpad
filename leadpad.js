@@ -505,35 +505,6 @@ async function renderHome() {
 }
 
 /* ─── LOGIN ─── */
-async function renderLogin() {
-  updateSidebarGeneric();
-  setTopbarTitle('Team Login');
-
-  const projectHint = session.projectKey || 'bharattex2026';
-  if (!currentProject || currentProject.key !== projectHint) {
-    const cfg = await loadProjectConfig(projectHint);
-    if (cfg) currentProject = { key: projectHint, ...cfg };
-  }
-
-  setContent(`
-    <div class="pw-screen" style="min-height:60vh">
-      <div class="pw-box">
-        <span class="material-symbols-outlined">admin_panel_settings</span>
-        <h3>Team access</h3>
-        <p>Enter your Admin or Creator password to continue.</p>
-        <input type="password" id="pw-input" placeholder="••••••••"
-          onkeydown="if(event.key==='Enter')doLogin()">
-        <div class="pw-error" id="pw-error">Incorrect password — try again</div>
-        <button class="btn-primary" onclick="doLogin()">
-          <span class="material-symbols-outlined">login</span> Enter
-        </button>
-        <button class="btn-ghost" style="margin-top:8px;width:100%" onclick="navigate('/')">← Back</button>
-      </div>
-    </div>
-  `);
-}
-
-/* ─── HUB ─── */
 async function renderHub() {
   if (!currentProject && session.projectKey) {
     const cfg = await loadProjectConfig(session.projectKey);
@@ -558,32 +529,56 @@ async function renderHub() {
 
   let cardsHtml = '';
   if (!projects.length) {
-    cardsHtml = `<div class="empty"><span class="material-symbols-outlined">folder_off</span>No projects yet.</div>`;
+    cardsHtml = `<div class="empty">
+      <span class="material-symbols-outlined">folder_off</span>
+      <div>No projects yet.</div>
+    </div>`;
   } else {
-    cardsHtml = `<div class="hub-grid">` + projects.map(p => `
-      <div class="project-card" onclick="navigate('/${p.key}/dash')">
-        <div class="project-card-icon">
-          <span class="material-symbols-outlined">event</span>
+    cardsHtml = projects.map(project => `
+      <div class="project-card" onclick="navigate('/${project.key}/dash')">
+        <div class="project-icon">
+          <span class="material-symbols-outlined">event_note</span>
         </div>
-        <div class="project-card-name">${esc(p.eventName)}</div>
-        <div class="project-card-sub">${esc(p.orgName)}${p.venueLine ? ' · ' + esc(p.venueLine) : ''}</div>
-        <div class="project-card-stats">
-          <span class="project-stat">📋 ${p.leadCount} leads</span>
-          <span class="project-stat">/${p.key}</span>
+        <h3>${esc(project.eventName || project.key)}</h3>
+        <p>${esc(project.orgName || '')}${project.venueLine ? ' · ' + esc(project.venueLine) : ''}</p>
+        <div class="project-meta">
+          <span>📋 ${project.leadCount || 0} leads</span>
+          <span>/${esc(project.key)}</span>
         </div>
       </div>
-    `).join('') + `</div>`;
+    `).join('');
   }
 
-  setContent(`
-    <div class="section-head">
-      <h2>All Projects</h2>
-      <p>Click a project to open its dashboard.</p>
-    </div>
-    ${cardsHtml}
-  `);
-}
+  const createProjectButton = session.role === 'admin'
+    ? `<button class="btn-primary" onclick="navigate('/projects/new')">
+        <span class="material-symbols-outlined">add</span>
+        Create Project
+      </button>`
+    : '';
 
+  const newProjectCard = session.role === 'admin'
+    ? `<button class="project-card project-card-new" onclick="navigate('/projects/new')">
+        <span class="material-symbols-outlined">add_circle</span>
+        <strong>New Project</strong>
+        <small>Create another event workspace</small>
+      </button>`
+    : '';
+
+  renderPage(`
+    <div class="page-head">
+      <div>
+        <h1>All Projects</h1>
+        <p>Click a project to open its dashboard.</p>
+      </div>
+      ${createProjectButton}
+    </div>
+
+    <div class="projects-grid">
+      ${cardsHtml}
+      ${newProjectCard}
+    </div>
+  `, 'All Projects');
+}
 /* ─── PUBLIC FORM ─── */
 async function renderPublicForm() {
   const cfg = currentProject;
