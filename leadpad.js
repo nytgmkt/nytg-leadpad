@@ -107,10 +107,10 @@ session = getSession();
     return;
   }
 
-  if (parts[0] === 'login') {
-    await renderLogin();
-    return;
-  }
+if (parts[0] === 'login') {
+  await renderHome();
+  return;
+}
 
   if (parts[0] === 'hub') {
     if (!session.role) { goHome(); return; }
