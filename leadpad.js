@@ -589,9 +589,33 @@ async function renderPublicForm() {
     `<button class="chip" onclick="selectSource(this,'${s.label.replace(/'/g,"\\'")}',${s.showsSalesperson ? 'true' : 'false'})">${esc(s.label)}</button>`
   ).join('');
 
-  const apparelHtml = cfg.apparelTypes.map(a =>
-    `<button class="chip" onclick="toggleChip(this,'apparel')">${esc(a)}</button>`
-  ).join('');
+  const fabricPropertyOptions = [
+    'Moisture management',
+    'Stretch & recovery',
+    'Lightweight',
+    'Color fastness',
+    'UV protection',
+    'Odor control',
+    'Sustainability / Recycled',
+    'Durability',
+    'Soft hand feel',
+    'Quick dry',
+  ];
+
+  const productOptions = [
+    'Activewear / Sportswear',
+    'Workwear / Uniform',
+    'Casualwear',
+    'Medical / Healthcare',
+    'Outerwear',
+    'Other',
+  ];
+
+  const chipButton = (group, value) =>
+    `<button class="chip" data-value="${esc(value)}" onclick="this.classList.toggle('active'); if ('${group}' === 'productType' && '${value}' === 'Other') document.getElementById('product-other-field').style.display = this.classList.contains('active') ? 'block' : 'none';">${esc(value)}</button>`;
+
+  const propertyHtml = fabricPropertyOptions.map(v => chipButton('fabricProperties', v)).join('');
+  const productHtml = productOptions.map(v => chipButton('productType', v)).join('');
 
   let spInner = '';
   if (cfg.salespeople && cfg.salespeople.length) {
@@ -631,12 +655,46 @@ async function renderPublicForm() {
           <h4><span class="material-symbols-outlined">person_add</span> Contact information</h4>
         </div>
         <div class="grid2">
-          <div class="field"><label>Name *</label><input id="f-name" placeholder="Your full name" autocomplete="name"></div>
-          <div class="field"><label>Company / Brand *</label><input id="f-company" placeholder="Company name" autocomplete="organization"></div>
+          <div class="field"><label>Full name *</label><input id="f-name" placeholder="Your full name" autocomplete="name"></div>
+          <div class="field"><label>Company name *</label><input id="f-company" placeholder="Company name" autocomplete="organization"></div>
         </div>
         <div class="grid2">
-          <div class="field"><label>Email *</label><input id="f-email" type="email" placeholder="work@email.com" autocomplete="email"></div>
-          <div class="field"><label>Country</label><input id="f-country" placeholder="Country" autocomplete="country-name"></div>
+          <div class="field"><label>Email address *</label><input id="f-email" type="email" placeholder="work@email.com" autocomplete="email"></div>
+          <div class="field">
+            <label>Country *</label>
+            <select id="f-country" onchange="document.getElementById('country-other-field').style.display = this.value === 'Other' ? 'block' : 'none';">
+              <option value="">Select country...</option>
+              <option>India</option>
+              <option>Vietnam</option>
+              <option>Hong Kong</option>
+              <option>USA</option>
+              <option>Thailand</option>
+              <option>Bangladesh</option>
+              <option>Indonesia</option>
+              <option>China</option>
+              <option>Other</option>
+            </select>
+          </div>
+        </div>
+        <div class="field" id="country-other-field" style="display:none;margin-top:8px">
+          <label>Please specify country *</label>
+          <input id="f-country-other" placeholder="Enter country">
+        </div>
+        <div class="field">
+          <label>Your role</label>
+          <select id="f-buyer-role" onchange="document.getElementById('role-other-field').style.display = this.value === 'Other' ? 'block' : 'none';">
+            <option value="">Select role...</option>
+            <option>Buyer / Sourcing</option>
+            <option>Product developer</option>
+            <option>Designer</option>
+            <option>Brand owner</option>
+            <option>Manufacturer</option>
+            <option>Other</option>
+          </select>
+        </div>
+        <div class="field" id="role-other-field" style="display:none;margin-top:8px;margin-bottom:0">
+          <label>Please specify role</label>
+          <input id="f-buyer-role-other" placeholder="Enter role">
         </div>
       </div>
 
@@ -659,20 +717,61 @@ async function renderPublicForm() {
           <h4><span class="material-symbols-outlined">inventory_2</span> Fabric interest *</h4>
         </div>
         <div class="fabric-grid" id="fabric-cards">${fabricHtml}</div>
+
         <div style="margin-top:16px">
           <div class="field" style="margin-bottom:6px">
-            <label>Apparel type (select all that apply)</label>
+            <label>Fabric properties you need *</label>
           </div>
-          <div class="chip-row" id="apparel-chips">${apparelHtml}</div>
+          <div class="chip-row" id="fabric-property-chips">${propertyHtml}</div>
+        </div>
+
+        <div style="margin-top:16px">
+          <div class="field" style="margin-bottom:6px">
+            <label>What product are you developing?</label>
+          </div>
+          <div class="chip-row" id="product-type-chips">${productHtml}</div>
+          <div class="field" id="product-other-field" style="display:none;margin-top:8px;margin-bottom:0">
+            <label>Please specify product</label>
+            <input id="f-product-other" placeholder="Enter product type">
+          </div>
         </div>
       </div>
 
       <div class="card">
         <div class="card-header">
-          <h4><span class="material-symbols-outlined">chat_bubble</span> Message &amp; requirements</h4>
+          <h4><span class="material-symbols-outlined">trending_up</span> Qualification</h4>
+        </div>
+        <div class="grid2">
+          <div class="field">
+            <label>Estimated order quantity per style / year</label>
+            <select id="f-estimated-quantity">
+              <option value="">Select quantity...</option>
+              <option>Under 500 kg</option>
+              <option>500-2,000 kg</option>
+              <option>2,000-10,000 kg</option>
+              <option>Over 10,000 kg</option>
+              <option>Not sure yet</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>How would you like us to follow up?</label>
+            <select id="f-follow-up">
+              <option value="">Select follow-up...</option>
+              <option>Email</option>
+              <option>WhatsApp / Line</option>
+              <option>Schedule a meeting</option>
+              <option>No need, just send moodboard</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h4><span class="material-symbols-outlined">chat_bubble</span> Specific preparation</h4>
         </div>
         <div class="field" style="margin-bottom:0">
-          <textarea id="f-msg" placeholder="Tell us about your project or fabric direction..."></textarea>
+          <textarea id="f-msg" placeholder="e.g. specific color, weight, certification needed"></textarea>
         </div>
       </div>
 
@@ -696,7 +795,6 @@ async function renderPublicForm() {
 
   subscribeLeads(cfg.key);
 }
-
 /* ─── DASHBOARD ─── */
 async function renderDashPage() {
   const cfg = currentProject;
@@ -1109,41 +1207,103 @@ function scoreLead(data, cfg) {
 }
 
 async function submitPublicForm() {
-  const name    = document.getElementById('f-name').value.trim();
-  const email   = document.getElementById('f-email').value.trim();
-  const company = document.getElementById('f-company').value.trim();
-  if (!name || !email || !company) { showToast('Please fill in Name, Company and Email.', 'error'); return; }
-  if (!selectedFabrics.length) { showToast('Please select at least one fabric interest.', 'error'); return; }
-  if (!selectedSource) { showToast('Please select how you heard about us.', 'error'); return; }
-
   const cfg = currentProject;
+
+  const name = document.getElementById('f-name').value.trim();
+  const email = document.getElementById('f-email').value.trim();
+  const company = document.getElementById('f-company').value.trim();
+
+  const countrySelect = document.getElementById('f-country')?.value.trim() || '';
+  const countryOther = document.getElementById('f-country-other')?.value.trim() || '';
+  const country = countrySelect === 'Other' ? countryOther : countrySelect;
+
+  const buyerRoleSelect = document.getElementById('f-buyer-role')?.value.trim() || '';
+  const buyerRoleOther = document.getElementById('f-buyer-role-other')?.value.trim() || '';
+  const buyerRole = buyerRoleSelect === 'Other' ? buyerRoleOther : buyerRoleSelect;
+
+  const fabricProperties = Array.from(document.querySelectorAll('#fabric-property-chips .chip.active'))
+    .map(chip => chip.dataset.value || chip.textContent.trim())
+    .filter(Boolean);
+
+  const productType = Array.from(document.querySelectorAll('#product-type-chips .chip.active'))
+    .map(chip => chip.dataset.value || chip.textContent.trim())
+    .filter(Boolean);
+
+  const productOther = document.getElementById('f-product-other')?.value.trim() || '';
+  const finalProductType = productType
+    .map(value => value === 'Other' && productOther ? productOther : value)
+    .filter(value => value !== 'Other' || productOther);
+
+  const estimatedOrderQuantity = document.getElementById('f-estimated-quantity')?.value.trim() || '';
+  const followUpPreference = document.getElementById('f-follow-up')?.value.trim() || '';
+  const specificRequest = document.getElementById('f-msg')?.value.trim() || '';
+
+  if (!name || !email || !company) {
+    showToast('Please fill in Name, Company and Email.', 'error');
+    return;
+  }
+
+  if (!country) {
+    showToast('Please select your country.', 'error');
+    return;
+  }
+
+  if (!selectedFabrics.length) {
+    showToast('Please select at least one fabric interest.', 'error');
+    return;
+  }
+
+  if (!fabricProperties.length) {
+    showToast('Please select at least one fabric property.', 'error');
+    return;
+  }
+
+  if (!selectedSource) {
+    showToast('Please select how you heard about us.', 'error');
+    return;
+  }
+
   const src = cfg.sources.find(s => s.label === selectedSource);
   const salesperson = (src && src.showsSalesperson) ? getSalesperson() : '';
   const otherText = document.getElementById('f-source-other')?.value.trim() || '';
   const source = (selectedSource === 'Other' && otherText) ? otherText : selectedSource;
 
-const leadData = {
-  name, email, company,
-  country: document.getElementById('f-country').value.trim(),
-  fabric: selectedFabrics.join(', '),
-  fabrics: selectedFabrics,
-  apparel: selectedApparel.join(', '),
-  apparelType: selectedApparel.join(', '),
-  msg: document.getElementById('f-msg').value.trim(),
-  needs: document.getElementById('f-msg').value.trim(),
-  source, salesperson,
-  note: '',
-};
+  const leadData = {
+    name,
+    email,
+    company,
+    country,
+    buyerRole,
+
+    source,
+    salesperson,
+
+    fabricInterest: selectedFabrics,
+    fabricProperties,
+    productType: finalProductType,
+    estimatedOrderQuantity,
+    followUpPreference,
+    specificRequest,
+
+    fabric: selectedFabrics.join(', '),
+    fabrics: selectedFabrics,
+    apparel: finalProductType.join(', '),
+    apparelType: finalProductType.join(', '),
+    msg: specificRequest,
+    needs: specificRequest,
+
+    note: '',
+  };
+
   const autoScore = scoreLead(leadData, cfg);
 
   await saveLeadToProject(cfg.key, makeLead({
     ...leadData,
-    priority:   autoScore.temp,
-    autoTemp:   autoScore.temp,
-    leadScore:  autoScore.score,
+    priority: autoScore.temp,
+    autoTemp: autoScore.temp,
+    leadScore: autoScore.score,
     manualTemp: '',
   }));
-
 
   document.getElementById('conf-email').textContent = email;
   document.getElementById('form-view').style.display = 'none';
