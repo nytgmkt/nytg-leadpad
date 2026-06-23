@@ -117,7 +117,11 @@ session = getSession();
     await renderHub();
     return;
   }
-
+if (parts[0] === 'projects' && parts[1] === 'new') {
+  if (session.role !== 'admin') { navigate('/hub'); return; }
+  await renderCreateProjectPage();
+  return;
+}
   const eventKey = parts[0];
   const sub = parts[1] || '';
 
@@ -578,6 +582,157 @@ async function renderHub() {
       ${newProjectCard}
     </div>
   `, 'All Projects');
+}
+async function renderCreateProjectPage() {
+  currentProject = null;
+  updateSidebarGeneric();
+  setTopbarTitle('Create Project');
+  updateRoleBadge();
+
+  const projects = await loadAllProjects();
+  const copyOptions = projects.map(project => `
+    <option value="${esc(project.key)}">${esc(project.eventName || project.key)}</option>
+  `).join('');
+
+  renderPage(`
+    <div class="page-head">
+      <div>
+        <h1>Create Project</h1>
+        <p>Create a new event workspace by copying the current LeadPad structure.</p>
+      </div>
+    </div>
+
+    <div class="card" style="max-width:760px">
+      <div class="card-header">
+        <h3><span class="material-symbols-outlined">add_business</span> Project info</h3>
+      </div>
+
+      <div class="grid">
+        <div class="field">
+          <label>Project / Event name *</label>
+          <input id="cp-event-name" placeholder="e.g. Bharat Tex 2027" oninput="syncProjectSlug()">
+        </div>
+
+        <div class="field">
+          <label>Project key *</label>
+          <input id="cp-project-key" placeholder="e.g. bharattex2027" oninput="this.dataset.touched='true'">
+        </div>
+      </div>
+
+      <div class="grid">
+        <div class="field">
+          <label>Organization *</label>
+          <input id="cp-org-name" placeholder="e.g. NYTG">
+        </div>
+
+        <div class="field">
+          <label>Booth ID</label>
+          <input id="cp-booth-id" placeholder="e.g. NYTG-BT27">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>Venue line</label>
+        <input id="cp-venue-line" placeholder="e.g. Global Textile Expo · Hall 5">
+      </div>
+
+      <div class="field">
+        <label>Copy settings from</label>
+        <select id="cp-copy-from">
+          <option value="bharattex2026">Bharat Tex 2026</option>
+          ${copyOptions}
+        </select>
+      </div>
+
+      <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px;flex-wrap:wrap">
+        <button class="btn-secondary" onclick="navigate('/hub')">Cancel</button>
+        <button class="btn-primary" onclick="submitCreateProject()">
+          <span class="material-symbols-outlined">rocket_launch</span>
+          Publish Project
+        </button>
+      </div>
+    </div>
+  `, 'Create Project');
+}
+
+function syncProjectSlug() {
+  const nameInput = document.getElementById('cp-event-name');
+  const keyInput = document.getElementById('cp-project-key');
+
+  if (!nameInput || !keyInput) return;
+  if (keyInput.dataset.touched === 'true') return;
+
+  const slug = nameInput.value
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '')
+    .slice(0, 40);
+
+  keyInput.value = slug;
+}
+
+async function submitCreateProject() {
+  if (session.role !== 'admin') {
+    showToast('Only admin can create projects.', 'error');
+    return;
+  }
+
+  const eventName = document.getElementById('cp-event-name')?.value.trim() || '';
+  const projectKey = document.getElementById('cp-project-key')?.value.trim().toLowerCase() || '';
+  const orgName = document.getElementById('cp-org-name')?.value.trim() || '';
+  const venueLine = document.getElementById('cp-venue-line')?.value.trim() || '';
+  const boothId = document.getElementById('cp-booth-id')?.value.trim() || '';
+  const copyFromProjectKey = document.getElementById('cp-copy-from')?.value || 'bharattex2026';
+
+  if (!eventName || !projectKey || !orgName) {
+    showToast('Please fill in Project name, Project key and Organization.', 'error');
+    return;
+  }
+
+  if (!/^[a-z0-9]+$/.test(projectKey)) {
+    showToast('Project key must use lowercase letters and numbers only.', 'error');
+    return;
+  }
+
+  const access = getSession();
+  const token = access?.token || '';
+
+  if (!token) {
+    showToast('Please login again before creating a project.', 'error');
+    navigate('/login');
+    return;
+  }
+
+  try {
+    const response = await fetch('https://createproject-qba6lqpwsa-as.a.run.app', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        authProjectKey: session.projectKey || 'bharattex2026',
+        token,
+        copyFromProjectKey,
+        projectKey,
+        eventName,
+        orgName,
+        venueLine,
+        boothId,
+      }),
+    });
+
+    const result = await response.json().catch(() => null);
+
+    if (!response.ok || !result || result.ok !== true) {
+      throw new Error(result?.error || 'Could not create project');
+    }
+
+    showToast('Project created.', 'success');
+    navigate('/hub');
+  } catch (error) {
+    console.error('Create project failed', error);
+    showToast('Could not create project. Please try again.', 'error');
+  }
 }
 /* ─── PUBLIC FORM ─── */
 async function renderPublicForm() {
@@ -1711,6 +1866,8 @@ window.toggleFabric    = toggleFabric;
 window.toggleChip      = toggleChip;
 window.onSalespersonSelectChange = onSalespersonSelectChange;
 window.submitPublicForm = submitPublicForm;
+window.syncProjectSlug = syncProjectSlug;
+window.submitCreateProject = submitCreateProject;
 window.renderPublicForm = renderPublicForm;
 window.toggleBoothForm = toggleBoothForm;
 window.saveBoothLead   = saveBoothLead;
