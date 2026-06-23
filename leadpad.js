@@ -795,7 +795,8 @@ const chipButton = (group, value) =>
         </div>
         <div class="field" id="follow-up-country-code-other-field" style="display:none;margin-top:8px">
           <label>Please specify country code *</label>
-          <input id="f-follow-up-country
+          <input id="f-follow-up-country-code-other" placeholder="e.g. +44">
+                </div>
       <div class="card">
         <div class="card-header">
           <h4><span class="material-symbols-outlined">chat_bubble</span> Specific preparation</h4>
@@ -804,7 +805,6 @@ const chipButton = (group, value) =>
           <textarea id="f-msg" placeholder="e.g. specific color, weight, certification needed"></textarea>
         </div>
       </div>
-
       <button class="btn-primary btn-teal" onclick="submitPublicForm()">
         <span class="material-symbols-outlined">send</span>
         Submit &amp; get moodboard
