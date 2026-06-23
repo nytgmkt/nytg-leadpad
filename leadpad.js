@@ -589,19 +589,19 @@ async function renderPublicForm() {
     `<button class="chip" onclick="selectSource(this,'${s.label.replace(/'/g,"\\'")}',${s.showsSalesperson ? 'true' : 'false'})">${esc(s.label)}</button>`
   ).join('');
 
-const fabricPropertyOptions = [
-  'Moisture management',
-  'Stretch & recovery',
-  'Lightweight',
-  'Color fastness',
-  'UV protection',
-  'Odor control',
-  'Sustainability / Recycled',
-  'Durability',
-  'Soft hand feel',
-  'Quick dry',
-  'Other',
-];
+  const fabricPropertyOptions = [
+    'Moisture management',
+    'Stretch & recovery',
+    'Lightweight',
+    'Color fastness',
+    'UV protection',
+    'Odor control',
+    'Sustainability / Recycled',
+    'Durability',
+    'Soft hand feel',
+    'Quick dry',
+    'Other',
+  ];
 
   const productOptions = [
     'Activewear / Sportswear',
@@ -612,8 +612,9 @@ const fabricPropertyOptions = [
     'Other',
   ];
 
-const chipButton = (group, value) =>
-  `<button class="chip" data-value="${esc(value)}" onclick="this.classList.toggle('selected'); if ('${group}' === 'productType' && '${value}' === 'Other') document.getElementById('product-other-field').style.display = this.classList.contains('selected') ? 'block' : 'none'; if ('${group}' === 'fabricProperties' && '${value}' === 'Other') document.getElementById('fabric-property-other-field').style.display = this.classList.contains('selected') ? 'block' : 'none';">${esc(value)}</button>`;
+  const chipButton = (group, value) =>
+    `<button class="chip" data-value="${esc(value)}" onclick="this.classList.toggle('selected'); if ('${group}' === 'productType' && '${value}' === 'Other') document.getElementById('product-other-field').style.display = this.classList.contains('selected') ? 'block' : 'none'; if ('${group}' === 'fabricProperties' && '${value}' === 'Other') document.getElementById('fabric-property-other-field').style.display = this.classList.contains('selected') ? 'block' : 'none';">${esc(value)}</button>`;
+
   const propertyHtml = fabricPropertyOptions.map(v => chipButton('fabricProperties', v)).join('');
   const productHtml = productOptions.map(v => chipButton('productType', v)).join('');
 
@@ -645,8 +646,8 @@ const chipButton = (group, value) =>
       <div class="hero-banner">
         <div class="hero-banner-overlay"></div>
         <div class="hero-banner-content">
-          <h3>Share your fabric needs</h3>
-          <p>Fill in a few details — we'll send your personalised NYTG moodboard to your email.</p>
+          <h3>NYTG LeadPad</h3>
+          <p>Fill in a few details and our team will follow up with the right fabric direction.</p>
         </div>
       </div>
 
@@ -722,10 +723,11 @@ const chipButton = (group, value) =>
           <div class="field" style="margin-bottom:6px">
             <label>Fabric properties you need *</label>
           </div>
-          <div class="chip-row" id="fabric-property-chips">${propertyHtml}</div><div class="field" id="fabric-property-other-field" style="display:none;margin-top:8px;margin-bottom:0">
-  <label>Please specify other fabric property *</label>
-  <input id="f-fabric-property-other" placeholder="Enter fabric property">
-</div>
+          <div class="chip-row" id="fabric-property-chips">${propertyHtml}</div>
+          <div class="field" id="fabric-property-other-field" style="display:none;margin-top:8px;margin-bottom:0">
+            <label>Please specify other fabric property *</label>
+            <input id="f-fabric-property-other" placeholder="Enter fabric property">
+          </div>
         </div>
 
         <div style="margin-top:16px">
@@ -756,47 +758,54 @@ const chipButton = (group, value) =>
               <option>Not sure yet</option>
             </select>
           </div>
-<div class="field">
-  <label>How would you like us to follow up?</label>
-  <select id="f-follow-up" onchange="const method=this.value; const needsNumber=method==='WhatsApp'||method==='Phone call'; const needsLine=method==='Line'; document.getElementById('follow-up-contact-field').style.display=(needsNumber||needsLine)?'block':'none'; document.getElementById('follow-up-phone-fields').style.display=needsNumber?'grid':'none'; document.getElementById('follow-up-line-field').style.display=needsLine?'block':'none';">
-    <option value="">Select follow-up...</option>
-    <option>Email</option>
-    <option>WhatsApp</option>
-    <option>Line</option>
-    <option>Phone call</option>
-    <option>No need, just send moodboard</option>
-  </select>
-</div>
-        </div>
-      </div>
-      <div id="follow-up-contact-field" style="display:none;margin-top:8px">
-        <div class="grid2" id="follow-up-phone-fields" style="display:none">
           <div class="field">
-            <label>Country code *</label>
-            <select id="f-follow-up-country-code" onchange="document.getElementById('follow-up-country-code-other-field').style.display = this.value === 'Other' ? 'block' : 'none';">
-              <option value="">Select code...</option>
-              <option value="+91">India +91</option>
-              <option value="+66">Thailand +66</option>
-              <option value="+84">Vietnam +84</option>
-              <option value="+852">Hong Kong +852</option>
-              <option value="+1">USA +1</option>
-              <option value="+880">Bangladesh +880</option>
-              <option value="+62">Indonesia +62</option>
-              <option value="+86">China +86</option>
-              <option value="+60">Malaysia +60</option>
-              <option value="+65">Singapore +65</option>
-              <option value="Other">Other</option>
+            <label>How would you like us to follow up?</label>
+            <select id="f-follow-up" onchange="const method=this.value; const needsNumber=method==='WhatsApp'||method==='Phone call'; const needsLine=method==='Line'; document.getElementById('follow-up-contact-field').style.display=(needsNumber||needsLine)?'block':'none'; document.getElementById('follow-up-phone-fields').style.display=needsNumber?'grid':'none'; document.getElementById('follow-up-line-field').style.display=needsLine?'block':'none'; document.getElementById('follow-up-country-code-other-field').style.display='none';">
+              <option value="">Select follow-up...</option>
+              <option>Email</option>
+              <option>WhatsApp</option>
+              <option>Line</option>
+              <option>Phone call</option>
+              <option>No need, just send moodboard</option>
             </select>
           </div>
-          <div class="field">
-            <label>WhatsApp / phone number *</label>
-            <input id="f-follow-up-number" placeholder="Enter number">
+        </div>
+
+        <div id="follow-up-contact-field" style="display:none;margin-top:8px">
+          <div class="grid2" id="follow-up-phone-fields" style="display:none">
+            <div class="field">
+              <label>Country code *</label>
+              <select id="f-follow-up-country-code" onchange="document.getElementById('follow-up-country-code-other-field').style.display = this.value === 'Other' ? 'block' : 'none';">
+                <option value="">Select code...</option>
+                <option value="+91">India +91</option>
+                <option value="+66">Thailand +66</option>
+                <option value="+84">Vietnam +84</option>
+                <option value="+852">Hong Kong +852</option>
+                <option value="+1">USA +1</option>
+                <option value="+880">Bangladesh +880</option>
+                <option value="+62">Indonesia +62</option>
+                <option value="+86">China +86</option>
+                <option value="+60">Malaysia +60</option>
+                <option value="+65">Singapore +65</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>WhatsApp / phone number *</label>
+              <input id="f-follow-up-number" placeholder="Enter number">
+            </div>
+          </div>
+          <div class="field" id="follow-up-country-code-other-field" style="display:none;margin-top:8px">
+            <label>Please specify country code *</label>
+            <input id="f-follow-up-country-code-other" placeholder="e.g. +44">
+          </div>
+          <div class="field" id="follow-up-line-field" style="display:none">
+            <label>Line ID *</label>
+            <input id="f-follow-up-line" placeholder="Enter Line ID">
           </div>
         </div>
-        <div class="field" id="follow-up-country-code-other-field" style="display:none;margin-top:8px">
-          <label>Please specify country code *</label>
-          <input id="f-follow-up-country-code-other" placeholder="e.g. +44">
-                </div>
+      </div>
+
       <div class="card">
         <div class="card-header">
           <h4><span class="material-symbols-outlined">chat_bubble</span> Specific preparation</h4>
@@ -805,6 +814,7 @@ const chipButton = (group, value) =>
           <textarea id="f-msg" placeholder="e.g. specific color, weight, certification needed"></textarea>
         </div>
       </div>
+
       <button class="btn-primary btn-teal" onclick="submitPublicForm()">
         <span class="material-symbols-outlined">send</span>
         Submit &amp; get moodboard
