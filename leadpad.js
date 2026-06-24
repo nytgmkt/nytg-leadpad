@@ -619,45 +619,40 @@ async function renderCreateProjectPage() {
   updateRoleBadge();
 
   const projects = await loadAllProjects();
-  const copyOptions = projects.map(project => `
-    <option value="${esc(project.key)}">${esc(project.eventName || project.key)}</option>
-  `).join('');
+  const copyOptions = projects
+    .filter(project => project.key !== 'bharattex2026')
+    .map(project => `
+      <option value="${esc(project.key)}">${esc(project.eventName || project.key)}</option>
+    `)
+    .join('');
 
   renderPage(`
     <div class="page-head">
       <div>
         <h1>Create Project</h1>
-        <p>Create a new event workspace by copying the current LeadPad structure.</p>
+        <p>Start a new event workspace from a ready LeadPad template.</p>
       </div>
     </div>
 
-    <div class="card" style="max-width:760px">
+    <div class="card" style="max-width:720px;margin:0 auto">
       <div class="card-header">
         <h3><span class="material-symbols-outlined">add_business</span> Project info</h3>
       </div>
 
-      <div class="grid">
-        <div class="field">
-          <label>Project / Event name *</label>
-          <input id="cp-event-name" placeholder="e.g. Bharat Tex 2027" oninput="syncProjectSlug()">
-        </div>
-
-        <div class="field">
-          <label>Project key *</label>
-          <input id="cp-project-key" placeholder="e.g. bharattex2027" oninput="this.dataset.touched='true'">
-        </div>
+      <div class="field">
+        <label>Project / Event name *</label>
+        <input id="cp-event-name" placeholder="e.g. Bharat Tex 2027" oninput="syncProjectSlug()">
       </div>
 
-      <div class="grid">
-        <div class="field">
-          <label>Organization *</label>
-          <input id="cp-org-name" placeholder="e.g. NYTG">
-        </div>
+      <div class="field">
+        <label>Project key *</label>
+        <input id="cp-project-key" placeholder="e.g. bharattex2027" oninput="this.dataset.touched='true'">
+        <small style="display:block;margin-top:6px;color:var(--muted)">Use lowercase letters and numbers only. This becomes the project URL.</small>
+      </div>
 
-        <div class="field">
-          <label>Booth ID</label>
-          <input id="cp-booth-id" placeholder="e.g. NYTG-BT27">
-        </div>
+      <div class="field">
+        <label>Organization *</label>
+        <input id="cp-org-name" placeholder="e.g. NYTG">
       </div>
 
       <div class="field">
@@ -666,11 +661,17 @@ async function renderCreateProjectPage() {
       </div>
 
       <div class="field">
-        <label>Copy settings from</label>
+        <label>Booth ID</label>
+        <input id="cp-booth-id" placeholder="e.g. NYTG-BT27">
+      </div>
+
+      <div class="field">
+        <label>Start from template</label>
         <select id="cp-copy-from">
-          <option value="bharattex2026">Bharat Tex 2026</option>
+          <option value="bharattex2026">Default LeadPad template</option>
           ${copyOptions}
         </select>
+        <small style="display:block;margin-top:6px;color:var(--muted)">This copies form structure and settings only. Leads will not be copied.</small>
       </div>
 
       <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px;flex-wrap:wrap">
@@ -683,7 +684,6 @@ async function renderCreateProjectPage() {
     </div>
   `, 'Create Project');
 }
-
 function syncProjectSlug() {
   const nameInput = document.getElementById('cp-event-name');
   const keyInput = document.getElementById('cp-project-key');
