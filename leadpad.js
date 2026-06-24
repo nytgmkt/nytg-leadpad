@@ -657,7 +657,15 @@ async function renderSettingsPage() {
         <label>Booth ID</label>
         <input id="st-booth-id" value="${esc(currentProject.boothId || '')}">
       </div>
+      <div class="card-header" style="margin-top:28px">
+        <h3><span class="material-symbols-outlined">inventory_2</span> Form options</h3>
+      </div>
 
+      <div class="field">
+        <label>Fabric Interest options</label>
+        <textarea id="st-fabrics" rows="6" placeholder="One option per line">${esc((currentProject.fabrics || []).map(f => f.name || f).join('\n'))}</textarea>
+        <small style="display:block;margin-top:6px;color:var(--muted)">One option per line. Example: Elitech 360</small>
+      </div>
       <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px;flex-wrap:wrap">
         <button class="btn-secondary" onclick="navigate('/${currentProject.key}/dash')">Cancel</button>
         <button class="btn-primary" onclick="submitProjectSettings()">
@@ -765,27 +773,42 @@ async function submitProjectSettings() {
   const orgName = document.getElementById('st-org-name')?.value.trim() || '';
   const venueLine = document.getElementById('st-venue-line')?.value.trim() || '';
   const boothId = document.getElementById('st-booth-id')?.value.trim() || '';
-
+  const fabricLines = document.getElementById('st-fabrics')?.value
+    .split('\n')
+    .map(value => value.trim())
+    .filter(Boolean) || [];
+  
+   if (!fabricLines.length) {
+    showToast('Please add at least one Fabric Interest option.', 'error');
+    return;
+  }
+  const fabrics = fabricLines.map(name => ({
+    name,
+    icon: '',
+    sub: '',
+    badgeClass: 'badge-teal',
+  }));
   if (!eventName || !orgName) {
     showToast('Please fill in Project name and Organization.', 'error');
     return;
   }
 
   try {
-    await saveProjectSettings(currentProject.key, {
-      eventName,
-      orgName,
-      venueLine,
-      boothId,
-    });
-
-    currentProject = {
-      ...currentProject,
-      eventName,
-      orgName,
-      venueLine,
-      boothId,
-    };
+await saveProjectSettings(currentProject.key, {
+  eventName,
+  orgName,
+  venueLine,
+  boothId,
+  fabrics,
+});
+currentProject = {
+  ...currentProject,
+  eventName,
+  orgName,
+  venueLine,
+  boothId,
+  fabrics,
+};
 
     showToast('Settings saved.', 'success');
     updateSidebarForProject();
