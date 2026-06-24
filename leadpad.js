@@ -143,7 +143,7 @@ if (parts[0] === 'projects' && parts[1] === 'new') {
     await renderBoothPage();
   } else if (sub === 'settings') {
     if (session.role !== 'admin') { navigate(`/${eventKey}/dash`); return; }
-    renderPage('Settings coming in Sprint 3 🚧', 'Settings');
+await renderSettingsPage();
   } else {
     renderError('Page not found.');
   }
