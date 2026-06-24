@@ -273,6 +273,9 @@ async function saveLeadToProject(key, leadData) {
 async function updateLeadInProject(key, leadKey, fields) {
   await update(ref(db, `projects/${key}/leads/${leadKey}`), fields);
 }
+async function saveProjectSettings(key, fields) {
+  await update(ref(db, `projects/${key}/settings`), fields);
+}
 /* ════════════════════════════════════
    NAVIGATION HELPERS
 ════════════════════════════════════ */
