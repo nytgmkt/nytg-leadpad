@@ -612,6 +612,59 @@ async function renderHub() {
     </div>
   `, 'All Projects');
 }
+async function renderSettingsPage() {
+  if (!currentProject || session.role !== 'admin') {
+    navigate('/hub');
+    return;
+  }
+
+  setTopbarTitle('Settings');
+  updateSidebarForProject();
+  updateRoleBadge();
+
+  renderPage(`
+    <div class="page-head">
+      <div>
+        <h1>Settings</h1>
+        <p>Edit basic project details for ${esc(currentProject.eventName || currentProject.key)}.</p>
+      </div>
+    </div>
+
+    <div class="card" style="max-width:760px;margin:0 auto">
+      <div class="card-header">
+        <h3><span class="material-symbols-outlined">settings</span> Project details</h3>
+      </div>
+
+      <div class="field">
+        <label>Project / Event name *</label>
+        <input id="st-event-name" value="${esc(currentProject.eventName || '')}">
+      </div>
+
+      <div class="field">
+        <label>Organization *</label>
+        <input id="st-org-name" value="${esc(currentProject.orgName || '')}">
+      </div>
+
+      <div class="field">
+        <label>Venue line</label>
+        <input id="st-venue-line" value="${esc(currentProject.venueLine || '')}">
+      </div>
+
+      <div class="field">
+        <label>Booth ID</label>
+        <input id="st-booth-id" value="${esc(currentProject.boothId || '')}">
+      </div>
+
+      <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px;flex-wrap:wrap">
+        <button class="btn-secondary" onclick="navigate('/${currentProject.key}/dash')">Cancel</button>
+        <button class="btn-primary" onclick="submitProjectSettings()">
+          <span class="material-symbols-outlined">save</span>
+          Save Settings
+        </button>
+      </div>
+    </div>
+  `, 'Settings');
+}
 async function renderCreateProjectPage() {
   currentProject = null;
   updateSidebarGeneric();
@@ -699,7 +752,46 @@ function syncProjectSlug() {
 
   keyInput.value = slug;
 }
+async function submitProjectSettings() {
+  if (!currentProject || session.role !== 'admin') {
+    showToast('Only admin can update settings.', 'error');
+    return;
+  }
 
+  const eventName = document.getElementById('st-event-name')?.value.trim() || '';
+  const orgName = document.getElementById('st-org-name')?.value.trim() || '';
+  const venueLine = document.getElementById('st-venue-line')?.value.trim() || '';
+  const boothId = document.getElementById('st-booth-id')?.value.trim() || '';
+
+  if (!eventName || !orgName) {
+    showToast('Please fill in Project name and Organization.', 'error');
+    return;
+  }
+
+  try {
+    await saveProjectSettings(currentProject.key, {
+      eventName,
+      orgName,
+      venueLine,
+      boothId,
+    });
+
+    currentProject = {
+      ...currentProject,
+      eventName,
+      orgName,
+      venueLine,
+      boothId,
+    };
+
+    showToast('Settings saved.', 'success');
+    updateSidebarForProject();
+    setTopbarTitle('Settings');
+  } catch (error) {
+    console.error('Save settings failed', error);
+    showToast('Could not save settings. Please try again.', 'error');
+  }
+}
 async function submitCreateProject() {
   if (session.role !== 'admin') {
     showToast('Only admin can create projects.', 'error');
@@ -1897,6 +1989,7 @@ window.onSalespersonSelectChange = onSalespersonSelectChange;
 window.submitPublicForm = submitPublicForm;
 window.syncProjectSlug = syncProjectSlug;
 window.submitCreateProject = submitCreateProject;
+window.submitProjectSettings = submitProjectSettings;
 window.renderPublicForm = renderPublicForm;
 window.toggleBoothForm = toggleBoothForm;
 window.saveBoothLead   = saveBoothLead;
