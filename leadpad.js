@@ -221,9 +221,9 @@ function getSession() {
   }
 }
 async function loadLeadsOnce(key) {
-  const session = getSession();
-  const token = session?.token || '';
-  const password = session?.password || '';
+  const access = getSession();
+  const token = access?.token || '';
+  const password = access?.password || '';
 
   const response = await fetch("https://asia-southeast1-nytg-leadpad.cloudfunctions.net/getDashboardLeads", {
     method: "POST",
@@ -237,22 +237,30 @@ async function loadLeadsOnce(key) {
     }),
   });
 
-  const result = await response.json();
+  const result = await response.json().catch(() => ({
+    ok: false,
+    error: "Could not load dashboard leads",
+  }));
 
   if (!response.ok || !result.ok) {
-    const message = result?.error || 'Could not load dashboard leads';
+    const message = result?.error || "Could not load dashboard leads";
 
-    if (response.status === 401 || message === 'Unauthorized') {
-      sessionStorage.removeItem('leadpadAccess');
+    if (response.status === 401 || message === "Unauthorized") {
+      sessionStorage.removeItem("leadpadAccess");
       session = {};
-      showToast('Session expired. Please log in again.', 'error');
-      navigate('/login');
+      showToast("Session expired. Please log in again.", "error");
+      navigate("/login");
       return;
     }
 
     throw new Error(message);
   }
 
+  leads = result.leads || [];
+
+  updateTopbarCount();
+  renderDashList();
+}
 async function saveLeadToProject(key, leadData) {
   const response = await fetch("https://submitlead-qba6lqpwsa-as.a.run.app", {
     method: "POST",
