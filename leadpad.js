@@ -688,6 +688,11 @@ async function renderSettingsPage() {
         <textarea id="st-sources" rows="6" placeholder="One option per line">${esc((currentProject.sources || []).map(s => s.label || s).join('\n'))}</textarea>
         <small style="display:block;margin-top:6px;color:var(--muted)">พิมพ์ 1 ตัวเลือกต่อ 1 บรรทัด กด Enter เพื่อเพิ่มตัวเลือกใหม่</small>
       </div>
+            <div class="field">
+        <label>Salesperson options</label>
+        <textarea id="st-salespeople" rows="5" placeholder="One salesperson per line">${esc((currentProject.salespeople || []).join('\n'))}</textarea>
+        <small style="display:block;margin-top:6px;color:var(--muted)">พิมพ์ 1 ชื่อต่อ 1 บรรทัด กด Enter เพื่อเพิ่มชื่อใหม่</small>
+      </div>
       <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px;flex-wrap:wrap">
         <button class="btn-secondary" onclick="navigate('/${currentProject.key}/dash')">Cancel</button>
         <button class="btn-primary" onclick="submitProjectSettings()">
@@ -841,6 +846,10 @@ const sources = sourceLines.map(label => {
     showsSalesperson: !!existing.showsSalesperson || sourceNeedsSalesperson(label),
   };
 });
+   const salespeople = document.getElementById('st-salespeople')?.value
+  .split('\n')
+  .map(value => value.trim())
+  .filter(Boolean) || [];
   const fabrics = fabricLines.map(name => ({
     name,
     icon: '',
@@ -862,6 +871,7 @@ await saveProjectSettings(currentProject.key, {
   productTypes,
   apparelTypes: productTypes,
    sources,
+   salespeople,
 });
 currentProject = {
   ...currentProject,
@@ -873,6 +883,7 @@ currentProject = {
   productTypes,
   apparelTypes: productTypes,
    sources,
+   salespeople,
 };
 
     showToast('Settings saved.', 'success');
