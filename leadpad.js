@@ -683,6 +683,11 @@ async function renderSettingsPage() {
         <textarea id="st-product-types" rows="6" placeholder="One option per line">${esc((currentProject.productTypes || currentProject.apparelTypes || []).join('\n'))}</textarea>
         <small style="display:block;margin-top:6px;color:var(--muted)">พิมพ์ 1 ตัวเลือกต่อ 1 บรรทัด กด Enter เพื่อเพิ่มตัวเลือกใหม่</small>
       </div>
+            <div class="field">
+        <label>Source options</label>
+        <textarea id="st-sources" rows="6" placeholder="One option per line">${esc((currentProject.sources || []).map(s => s.label || s).join('\n'))}</textarea>
+        <small style="display:block;margin-top:6px;color:var(--muted)">พิมพ์ 1 ตัวเลือกต่อ 1 บรรทัด กด Enter เพื่อเพิ่มตัวเลือกใหม่</small>
+      </div>
       <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px;flex-wrap:wrap">
         <button class="btn-secondary" onclick="navigate('/${currentProject.key}/dash')">Cancel</button>
         <button class="btn-primary" onclick="submitProjectSettings()">
@@ -808,6 +813,24 @@ async function submitProjectSettings() {
     showToast('Please add at least one Product Type option.', 'error');
     return;
   }
+     const sourceLines = document.getElementById('st-sources')?.value
+    .split('\n')
+    .map(value => value.trim())
+    .filter(Boolean) || [];
+
+  if (!sourceLines.length) {
+    showToast('Please add at least one Source option.', 'error');
+    return;
+  }
+
+  const oldSources = currentProject.sources || [];
+  const sources = sourceLines.map(label => {
+    const existing = oldSources.find(source => (source.label || source) === label) || {};
+    return {
+      label,
+      showsSalesperson: !!existing.showsSalesperson,
+    };
+  });
   const fabrics = fabricLines.map(name => ({
     name,
     icon: '',
@@ -828,6 +851,7 @@ await saveProjectSettings(currentProject.key, {
   fabrics,
   productTypes,
   apparelTypes: productTypes,
+   sources,
 });
 currentProject = {
   ...currentProject,
@@ -838,6 +862,7 @@ currentProject = {
   fabrics,
   productTypes,
   apparelTypes: productTypes,
+   sources,
 };
 
     showToast('Settings saved.', 'success');
