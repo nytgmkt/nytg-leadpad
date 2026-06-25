@@ -664,7 +664,7 @@ async function renderSettingsPage() {
       <div class="field">
         <label>Fabric Interest options</label>
         <textarea id="st-fabrics" rows="6" placeholder="One option per line">${esc((currentProject.fabrics || []).map(f => f.name || f).join('\n'))}</textarea>
-        <small style="display:block;margin-top:6px;color:var(--muted)">One option per line. Example: Elitech 360</small>
+        <small style="display:block;margin-top:6px;color:var(--muted)">พิมพ์ 1 ตัวเลือกต่อ 1 บรรทัด กด Enter เพื่อเพิ่มตัวเลือกใหม่</small>
       </div>
       <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px;flex-wrap:wrap">
         <button class="btn-secondary" onclick="navigate('/${currentProject.key}/dash')">Cancel</button>
