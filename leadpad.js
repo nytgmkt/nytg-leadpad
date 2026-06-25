@@ -688,6 +688,29 @@ async function renderSettingsPage() {
         <textarea id="st-sources" rows="6" placeholder="One option per line">${esc((currentProject.sources || []).map(s => s.label || s).join('\n'))}</textarea>
         <small style="display:block;margin-top:6px;color:var(--muted)">พิมพ์ 1 ตัวเลือกต่อ 1 บรรทัด กด Enter เพื่อเพิ่มตัวเลือกใหม่</small>
       </div>
+      <div class="field">
+  <label>Estimated order quantity options</label>
+  <textarea id="st-quantity-options" rows="5" placeholder="One option per line">${esc((currentProject.estimatedOrderQuantityOptions || [
+    'Under 500 kg',
+    '500-2,000 kg',
+    '2,000-5,000 kg',
+    '5,000+ kg',
+    'Not sure yet'
+  ]).join('\n'))}</textarea>
+  <small style="display:block;margin-top:6px;color:var(--muted)">พิมพ์ 1 ตัวเลือกต่อ 1 บรรทัด กด Enter เพื่อเพิ่มตัวเลือกใหม่</small>
+</div>
+
+<div class="field">
+  <label>Follow-up method options</label>
+  <textarea id="st-follow-up-options" rows="5" placeholder="One option per line">${esc((currentProject.followUpOptions || [
+    'WhatsApp',
+    'Line',
+    'Phone call',
+    'Email',
+    'No need, just send moodboard'
+  ]).join('\n'))}</textarea>
+  <small style="display:block;margin-top:6px;color:var(--muted)">พิมพ์ 1 ตัวเลือกต่อ 1 บรรทัด กด Enter เพื่อเพิ่มตัวเลือกใหม่</small>
+</div>
             <div class="field">
         <label>Salesperson options</label>
         <textarea id="st-salespeople" rows="5" placeholder="One salesperson per line">${esc((currentProject.salespeople || []).join('\n'))}</textarea>
@@ -827,7 +850,25 @@ async function submitProjectSettings() {
     showToast('Please add at least one Source option.', 'error');
     return;
   }
+const quantityOptions = document.getElementById('st-quantity-options')?.value
+  .split('\n')
+  .map(value => value.trim())
+  .filter(Boolean) || [];
 
+const followUpOptions = document.getElementById('st-follow-up-options')?.value
+  .split('\n')
+  .map(value => value.trim())
+  .filter(Boolean) || [];
+
+if (!quantityOptions.length) {
+  showToast('Please add at least one Estimated quantity option.', 'error');
+  return;
+}
+
+if (!followUpOptions.length) {
+  showToast('Please add at least one Follow-up option.', 'error');
+  return;
+}
 const oldSources = currentProject.sources || [];
 const sourceNeedsSalesperson = (label) => {
   const text = String(label || '').toLowerCase();
@@ -872,6 +913,8 @@ await saveProjectSettings(currentProject.key, {
   apparelTypes: productTypes,
    sources,
    salespeople,
+   estimatedOrderQuantityOptions: quantityOptions,
+followUpOptions,
 });
 currentProject = {
   ...currentProject,
@@ -884,6 +927,8 @@ currentProject = {
   apparelTypes: productTypes,
    sources,
    salespeople,
+   estimatedOrderQuantityOptions: quantityOptions,
+followUpOptions,
 };
 
     showToast('Settings saved.', 'success');
