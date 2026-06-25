@@ -823,14 +823,24 @@ async function submitProjectSettings() {
     return;
   }
 
-  const oldSources = currentProject.sources || [];
-  const sources = sourceLines.map(label => {
-    const existing = oldSources.find(source => (source.label || source) === label) || {};
-    return {
-      label,
-      showsSalesperson: !!existing.showsSalesperson,
-    };
-  });
+const oldSources = currentProject.sources || [];
+const sourceNeedsSalesperson = (label) => {
+  const text = String(label || '').toLowerCase();
+  return (
+    text.includes('event') ||
+    text.includes('booth') ||
+    text.includes('trade show') ||
+    text.includes('tradeshow')
+  );
+};
+
+const sources = sourceLines.map(label => {
+  const existing = oldSources.find(source => (source.label || source) === label) || {};
+  return {
+    label,
+    showsSalesperson: !!existing.showsSalesperson || sourceNeedsSalesperson(label),
+  };
+});
   const fabrics = fabricLines.map(name => ({
     name,
     icon: '',
