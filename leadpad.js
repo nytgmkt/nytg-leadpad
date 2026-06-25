@@ -678,6 +678,11 @@ async function renderSettingsPage() {
         <textarea id="st-fabrics" rows="6" placeholder="One option per line">${esc((currentProject.fabrics || []).map(f => f.name || f).join('\n'))}</textarea>
         <small style="display:block;margin-top:6px;color:var(--muted)">พิมพ์ 1 ตัวเลือกต่อ 1 บรรทัด กด Enter เพื่อเพิ่มตัวเลือกใหม่</small>
       </div>
+            <div class="field">
+        <label>Product Type options</label>
+        <textarea id="st-product-types" rows="6" placeholder="One option per line">${esc((currentProject.productTypes || currentProject.apparelTypes || []).join('\n'))}</textarea>
+        <small style="display:block;margin-top:6px;color:var(--muted)">พิมพ์ 1 ตัวเลือกต่อ 1 บรรทัด กด Enter เพื่อเพิ่มตัวเลือกใหม่</small>
+      </div>
       <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px;flex-wrap:wrap">
         <button class="btn-secondary" onclick="navigate('/${currentProject.key}/dash')">Cancel</button>
         <button class="btn-primary" onclick="submitProjectSettings()">
@@ -794,6 +799,15 @@ async function submitProjectSettings() {
     showToast('Please add at least one Fabric Interest option.', 'error');
     return;
   }
+  const productTypes = document.getElementById('st-product-types')?.value
+    .split('\n')
+    .map(value => value.trim())
+    .filter(Boolean) || [];
+
+  if (!productTypes.length) {
+    showToast('Please add at least one Product Type option.', 'error');
+    return;
+  }
   const fabrics = fabricLines.map(name => ({
     name,
     icon: '',
@@ -812,6 +826,8 @@ await saveProjectSettings(currentProject.key, {
   venueLine,
   boothId,
   fabrics,
+  productTypes,
+  apparelTypes: productTypes,
 });
 currentProject = {
   ...currentProject,
@@ -820,6 +836,8 @@ currentProject = {
   venueLine,
   boothId,
   fabrics,
+  productTypes,
+  apparelTypes: productTypes,
 };
 
     showToast('Settings saved.', 'success');
