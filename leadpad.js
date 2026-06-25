@@ -240,14 +240,18 @@ async function loadLeadsOnce(key) {
   const result = await response.json();
 
   if (!response.ok || !result.ok) {
-    throw new Error(result.error || "Could not load dashboard leads");
+    const message = result?.error || 'Could not load dashboard leads';
+
+    if (response.status === 401 || message === 'Unauthorized') {
+      sessionStorage.removeItem('leadpadAccess');
+      session = {};
+      showToast('Session expired. Please log in again.', 'error');
+      navigate('/login');
+      return;
+    }
+
+    throw new Error(message);
   }
-
-  leads = result.leads || [];
-
-  updateTopbarCount();
-  renderDashList();
-}
 
 async function saveLeadToProject(key, leadData) {
   const response = await fetch("https://submitlead-qba6lqpwsa-as.a.run.app", {
