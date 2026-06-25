@@ -948,14 +948,14 @@ async function renderPublicForm() {
     'Other',
   ];
 
-  const productOptions = [
-    'Activewear / Sportswear',
-    'Workwear / Uniform',
-    'Casualwear',
-    'Medical / Healthcare',
-    'Outerwear',
-    'Other',
-  ];
+const productOptions = currentProject.productTypes || currentProject.apparelTypes || [
+  'Activewear / Sportswear',
+  'Workwear / Uniform',
+  'Casualwear',
+  'Medical / Healthcare',
+  'Outerwear',
+  'Other',
+];
 
   const chipButton = (group, value) =>
     `<button class="chip" data-value="${esc(value)}" onclick="this.classList.toggle('selected'); if ('${group}' === 'productType' && '${value}' === 'Other') document.getElementById('product-other-field').style.display = this.classList.contains('selected') ? 'block' : 'none'; if ('${group}' === 'fabricProperties' && '${value}' === 'Other') document.getElementById('fabric-property-other-field').style.display = this.classList.contains('selected') ? 'block' : 'none';">${esc(value)}</button>`;
