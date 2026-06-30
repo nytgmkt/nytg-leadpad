@@ -1053,7 +1053,29 @@ const productOptions = currentProject.productTypes || currentProject.apparelType
 
   const propertyHtml = fabricPropertyOptions.map(v => chipButton('fabricProperties', v)).join('');
   const productHtml = productOptions.map(v => chipButton('productType', v)).join('');
+const quantityOptions = currentProject.estimatedOrderQuantityOptions || currentProject.quantityOptions || [
+  'Under 500 kg',
+  '500-2,000 kg',
+  '2,000-10,000 kg',
+  'Over 10,000 kg',
+  'Not sure yet',
+];
 
+const followUpOptions = currentProject.followUpOptions || [
+  'Email',
+  'WhatsApp',
+  'Line',
+  'Phone call',
+  'No need, just send moodboard',
+];
+
+const quantityHtml = quantityOptions
+  .map(option => `<option>${esc(option)}</option>`)
+  .join('');
+
+const followUpHtml = followUpOptions
+  .map(option => `<option>${esc(option)}</option>`)
+  .join('');
   let spInner = '';
   if (cfg.salespeople && cfg.salespeople.length) {
     const opts = cfg.salespeople.map(s => `<option value="${esc(s)}">${esc(s)}</option>`).join('');
@@ -1186,22 +1208,13 @@ const productOptions = currentProject.productTypes || currentProject.apparelType
           <div class="field">
             <label>Estimated order quantity per style / year</label>
             <select id="f-estimated-quantity">
-              <option value="">Select quantity...</option>
-              <option>Under 500 kg</option>
-              <option>500-2,000 kg</option>
-              <option>2,000-10,000 kg</option>
-              <option>Over 10,000 kg</option>
-              <option>Not sure yet</option>
+${quantityHtml}
             </select>
           </div>
           <div class="field">
             <label>How would you like us to follow up?</label>
             <select id="f-follow-up" onchange="const method=this.value; const needsNumber=method==='WhatsApp'||method==='Phone call'; const needsLine=method==='Line'; document.getElementById('follow-up-contact-field').style.display=(needsNumber||needsLine)?'block':'none'; document.getElementById('follow-up-phone-fields').style.display=needsNumber?'grid':'none'; document.getElementById('follow-up-line-field').style.display=needsLine?'block':'none'; document.getElementById('follow-up-country-code-other-field').style.display='none';">
-              <option value="">Select follow-up...</option>
-              <option>Email</option>
-              <option>WhatsApp</option>
-              <option>Line</option>
-              <option>Phone call</option>
+${followUpHtml}
               <option>No need, just send moodboard</option>
             </select>
           </div>
