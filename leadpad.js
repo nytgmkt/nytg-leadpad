@@ -1944,26 +1944,42 @@ function leadHTML(l, cfg) {
   const noteRow = l.note
     ? `<div class="note-text"><span class="material-symbols-outlined" style="font-size:13px">edit_note</span>${esc(l.note)}</div>` : '';
 
-  const key = l._key || l.id;
-  return `<div class="lead-card">
-    <div class="lead-top">
-      <div style="display:flex;gap:10px;align-items:flex-start;flex:1;min-width:0">
-        <div class="lead-avatar">${initials(l.name)}</div>
-        <div class="lead-info">
-          <div class="lead-name">${esc(l.name)}</div>
-          <div class="lead-sub">${esc(l.company || '—')}${l.country ? ' · ' + esc(l.country) : ''}${l.email ? ' · ' + esc(l.email) : ''}</div>
-        </div>
-      </div>
-      <select class="priority-select" onchange="updateLeadTemp('${key}',this.value)">${priorityOptions}</select>
+ const key = l._key || l.id;
+
+return `<div class="lead-card">
+  <div class="lead-card-top">
+    <div class="lead-avatar">${initials(l.name)}</div>
+
+    <div class="lead-info">
+      <div class="lead-name">${esc(l.name)}</div>
+      <div class="lead-sub">${esc(l.company || '-')}${l.country ? ' · ' + esc(l.country) : ''}${l.email ? ' · ' + esc(l.email) : ''}</div>
     </div>
-    <div class="badges">${fabricBadges}${appBadge}<span class="badge ${srcClass}">${esc(l.source)}</span>${manualIndicator || '<span class="badge ' + pClass + '">' + esc(temp) + '</span>'}${scoreBadge}${salesBadge}</div>
-    ${noteRow}
-    <div class="note-area">
-      <input class="note-input" id="note-${key}" placeholder="Add note..." value="${esc(l.note || '')}">
-      <button class="btn-secondary" style="font-size:12px;padding:5px 12px;flex-shrink:0" onclick="saveNote('${key}')">Save</button>
+
+    <div class="lead-temp-control">
+      <select class="priority-select" onchange="updateLeadTemp('${key}', this.value)">
+        ${priorityOptions}
+      </select>
     </div>
-    <div class="lead-time">${esc(l.time)}</div>
-  </div>`;
+  </div>
+
+  <div class="badges">
+    ${fabricBadges}
+    ${appBadge}
+    <span class="badge ${srcClass}">${esc(l.source)}</span>
+    ${manualIndicator || `<span class="badge ${pClass}">${esc(temp)}</span>`}
+    ${scoreBadge}
+    ${salesBadge}
+  </div>
+
+  ${noteRow}
+
+  <div class="note-area">
+    <input class="note-input" id="note-${key}" placeholder="Add note..." value="${esc(l.note || '')}">
+    <button class="btn-secondary" style="font-size:12px;padding:5px 12px;flex-shrink:0" onclick="saveNote('${key}')">Save</button>
+  </div>
+
+  <div class="lead-time">${esc(l.time)}</div>
+</div>`;
 }
 
 /* ════════════════════════════════════
