@@ -170,10 +170,15 @@ async function loadProjectConfig(key) {
 async function loadAllProjects() {
   const snap = await get(ref(db, 'projects'));
   if (!snap.exists()) return [];
+
   const projects = [];
   snap.forEach(child => {
-    const cfg = child.val().config || {};
-    const leadsObj = child.val().leads || {};
+    const data = child.val() || {};
+    const cfg = data.settings || data.config || {};
+
+    if (cfg.archived === true) return;
+
+    const leadsObj = data.leads || {};
     projects.push({
       key: child.key,
       eventName: cfg.eventName || child.key,
@@ -182,6 +187,7 @@ async function loadAllProjects() {
       leadCount: Object.keys(leadsObj).length,
     });
   });
+
   return projects;
 }
 
@@ -287,6 +293,34 @@ async function updateLeadInProject(key, leadKey, fields) {
 }
 async function saveProjectSettings(key, fields) {
   await update(ref(db, `projects/${key}/settings`), fields);
+}
+
+async function archiveProject(key) {
+  if (!currentProject || session.role !== 'admin') {
+    showToast('Only admin can archive projects.', 'error');
+    return;
+  }
+
+  const name = currentProject.eventName || key;
+  const ok = window.confirm(
+    `Archive "${name}"?\n\nThis will hide the project from All Projects, but leads will not be deleted.`
+  );
+
+  if (!ok) return;
+
+  try {
+    await saveProjectSettings(key, {
+      archived: true,
+      archivedAt: new Date().toISOString(),
+    });
+
+    showToast('Project archived.', 'success');
+    currentProject = null;
+    navigate('/hub');
+  } catch (error) {
+    console.error('Archive project failed', error);
+    showToast('Could not archive project. Please try again.', 'error');
+  }
 }
 /* ════════════════════════════════════
    NAVIGATION HELPERS
@@ -2170,6 +2204,7 @@ window.submitPublicForm = submitPublicForm;
 window.syncProjectSlug = syncProjectSlug;
 window.submitCreateProject = submitCreateProject;
 window.submitProjectSettings = submitProjectSettings;
+window.archiveProject = archiveProject;
 window.renderPublicForm = renderPublicForm;
 window.toggleBoothForm = toggleBoothForm;
 window.saveBoothLead   = saveBoothLead;
