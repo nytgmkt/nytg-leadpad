@@ -345,7 +345,6 @@ function updateSidebarForProject() {
   if (session.role) {
     items.push({ label_only: 'Internal' });
     items.push({ icon: 'dashboard', label: 'Dashboard', onclick: `navigate('/${key}/dash')`, active: hash.includes('/dash') });
-    items.push({ icon: 'edit_note', label: 'Booth Entry', onclick: `navigate('/${key}/booth')`, active: hash.includes('/booth') });
 
     if (session.role === 'admin') {
       items.push({ icon: 'settings', label: 'Settings', onclick: `navigate('/${key}/settings')`, active: hash.includes('/settings') });
