@@ -1659,17 +1659,22 @@ function toggleFabric(el, name) {
 }
 
 function toggleChip(el, group) {
-  const name = el.textContent.trim();
-  if (group === 'apparel') {
-    if (el.classList.contains('selected')) {
-      el.classList.remove('selected');
-      selectedApparel = selectedApparel.filter(a => a !== name);
-    } else {
-      el.classList.add('selected');
-      selectedApparel.push(name);
+  el.classList.toggle('active');
+
+  if (group === 'productType') {
+    const otherField = document.getElementById('product-other-field');
+    if (otherField) {
+      const hasOther = !!document.querySelector('#product-type-chips .chip.active[data-value="Other"]');
+      otherField.style.display = hasOther ? 'block' : 'none';
     }
-  } else {
-    el.classList.toggle('selected');
+  }
+
+  if (group === 'fabricProperties') {
+    const otherField = document.getElementById('fabric-property-other-field');
+    if (otherField) {
+      const hasOther = !!document.querySelector('#fabric-property-chips .chip.active[data-value="Other"]');
+      otherField.style.display = hasOther ? 'block' : 'none';
+    }
   }
 }
 
