@@ -749,13 +749,20 @@ async function renderSettingsPage() {
         <textarea id="st-salespeople" rows="5" placeholder="One salesperson per line">${esc((currentProject.salespeople || []).join('\n'))}</textarea>
         <small style="display:block;margin-top:6px;color:var(--muted)">พิมพ์ 1 ชื่อต่อ 1 บรรทัด กด Enter เพื่อเพิ่มชื่อใหม่</small>
       </div>
-      <div style="display:flex;gap:12px;justify-content:flex-end;margin-top:24px;flex-wrap:wrap">
-        <button class="btn-secondary" onclick="navigate('/${currentProject.key}/dash')">Cancel</button>
-        <button class="btn-primary" onclick="submitProjectSettings()">
-          <span class="material-symbols-outlined">save</span>
-          Save Settings
-        </button>
-      </div>
+<div style="display:flex;gap:12px;justify-content:space-between;margin-top:24px;flex-wrap:wrap">
+  <button class="btn-secondary" style="color:#b91c1c;border-color:#fecaca" onclick="archiveProject('${currentProject.key}')">
+    <span class="material-symbols-outlined">archive</span>
+    Archive Project
+  </button>
+
+  <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end">
+    <button class="btn-secondary" onclick="navigate('/${currentProject.key}/dash')">Cancel</button>
+    <button class="btn-primary" onclick="submitProjectSettings()">
+      <span class="material-symbols-outlined">save</span>
+      Save Settings
+    </button>
+  </div>
+</div>
     </div>
   `, 'Settings');
 }
