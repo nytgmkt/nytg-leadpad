@@ -360,8 +360,8 @@ async function restoreProject(key) {
       archivedAt: null,
     });
 
-    showToast('Project restored.', 'success');
-    navigate('/hub');
+showToast('Project restored.', 'success');
+await renderHub();
   } catch (error) {
     console.error('Restore project failed', error);
     showToast('Could not restore project. Please try again.', 'error');
