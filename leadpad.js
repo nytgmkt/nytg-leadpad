@@ -2,7 +2,7 @@
    FIREBASE SETUP
 ════════════════════════════════════ */
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-app.js';
-import { getDatabase, ref, push, get, onValue, update, set } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js';
+import { getDatabase, ref, push, get, onValue, update, set, remove } from 'https://www.gstatic.com/firebasejs/11.0.0/firebase-database.js';
 
 const firebaseConfig = {
   apiKey: "AIzaSyC1uyUDUgwzlIWqqn6TG6-rcogsWVHs7jU",
@@ -360,11 +360,43 @@ async function restoreProject(key) {
       archivedAt: null,
     });
 
-showToast('Project restored.', 'success');
-await renderHub();
+    showToast('Project restored.', 'success');
+    await renderHub();
   } catch (error) {
     console.error('Restore project failed', error);
     showToast('Could not restore project. Please try again.', 'error');
+  }
+}
+
+async function deleteProject(key) {
+  if (!currentProject || session.role !== 'admin') {
+    showToast('Only admin can delete projects.', 'error');
+    return;
+  }
+
+  if (key === 'bharattex2026') {
+    showToast('Default project cannot be deleted.', 'error');
+    return;
+  }
+
+  const name = currentProject.eventName || key;
+  const ok = window.confirm(
+    `Delete "${name}" permanently?\n\nThis will delete the project and all leads inside it. This cannot be undone.`
+  );
+
+  if (!ok) return;
+
+  const typed = window.prompt(`Type DELETE to confirm deleting "${name}".`);
+  if (typed !== 'DELETE') return;
+
+  try {
+    await remove(ref(db, `projects/${key}`));
+    showToast('Project deleted.', 'success');
+    currentProject = null;
+    navigate('/hub');
+  } catch (error) {
+    console.error('Delete project failed', error);
+    showToast('Could not delete project. Please try again.', 'error');
   }
 }
 /* ════════════════════════════════════
@@ -835,13 +867,18 @@ async function renderSettingsPage() {
     Archive Project
   </button>
 
-  <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end">
-    <button class="btn-secondary" onclick="navigate('/${currentProject.key}/dash')">Cancel</button>
-    <button class="btn-primary" onclick="submitProjectSettings()">
-      <span class="material-symbols-outlined">save</span>
-      Save Settings
-    </button>
-  </div>
+  <button class="btn-secondary" style="color:#b42318;border-color:#fda29b" onclick="deleteProject('${currentProject.key}')">
+    <span class="material-symbols-outlined">delete</span>
+    Delete Project
+  </button>
+
+  <button class="btn-secondary" onclick="navigate('/${currentProject.key}/dash')">Cancel</button>
+
+  <button class="btn-primary" onclick="submitProjectSettings()">
+    <span class="material-symbols-outlined">save</span>
+    Save Settings
+  </button>
+</div>
 </div>
     </div>
   `, 'Settings');
@@ -2293,6 +2330,7 @@ window.submitCreateProject = submitCreateProject;
 window.submitProjectSettings = submitProjectSettings;
 window.archiveProject = archiveProject;
 window.restoreProject = restoreProject;
+window.deleteProject = deleteProject;
 window.renderPublicForm = renderPublicForm;
 window.toggleBoothForm = toggleBoothForm;
 window.saveBoothLead   = saveBoothLead;
