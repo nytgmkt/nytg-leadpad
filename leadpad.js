@@ -681,16 +681,9 @@ const newProjectCard = session.role === 'admin'
   ? `<button class="project-card project-card-new" onclick="navigate('/projects/new')">
       <span class="material-symbols-outlined">add_circle</span>
       <strong>Create New Project</strong>
+      <small>Create another event workspace</small>
     </button>`
   : '';
-
-  const newProjectCard = session.role === 'admin'
-    ? `<button class="project-card project-card-new" onclick="navigate('/projects/new')">
-        <span class="material-symbols-outlined">add_circle</span>
-        <strong>New Project</strong>
-        <small>Create another event workspace</small>
-      </button>`
-    : '';
 
   const archivedHtml = archivedProjects.length
     ? archivedProjects.map(project => `
