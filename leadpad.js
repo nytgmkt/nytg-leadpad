@@ -677,12 +677,12 @@ async function renderHub() {
     `).join('');
   }
 
-  const createProjectButton = session.role === 'admin'
-    ? `<button class="btn-primary" onclick="navigate('/projects/new')">
-        <span class="material-symbols-outlined">add</span>
-        Create Project
-      </button>`
-    : '';
+const newProjectCard = session.role === 'admin'
+  ? `<button class="project-card project-card-new" onclick="navigate('/projects/new')">
+      <span class="material-symbols-outlined">add_circle</span>
+      <strong>Create New Project</strong>
+    </button>`
+  : '';
 
   const newProjectCard = session.role === 'admin'
     ? `<button class="project-card project-card-new" onclick="navigate('/projects/new')">
