@@ -729,7 +729,7 @@ const newProjectCard = session.role === 'admin'
         <h1>All Projects</h1>
         <p>Click a project to open its dashboard.</p>
       </div>
-      ${createProjectButton}
+ 
     </div>
 
     <div class="projects-grid">
