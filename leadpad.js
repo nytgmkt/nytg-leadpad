@@ -190,7 +190,30 @@ async function loadAllProjects() {
 
   return projects;
 }
+async function loadArchivedProjects() {
+  const snap = await get(ref(db, 'projects'));
+  if (!snap.exists()) return [];
 
+  const projects = [];
+  snap.forEach(child => {
+    const data = child.val() || {};
+    const cfg = data.settings || data.config || {};
+
+    if (cfg.archived !== true) return;
+
+    const leadsObj = data.leads || {};
+    projects.push({
+      key: child.key,
+      eventName: cfg.eventName || child.key,
+      orgName: cfg.orgName || '',
+      venueLine: cfg.venueLine || '',
+      leadCount: Object.keys(leadsObj).length,
+      archivedAt: cfg.archivedAt || '',
+    });
+  });
+
+  return projects;
+}
 function subscribeLeads(key) {
   if (leadsListener) leadsListener();
 
@@ -320,6 +343,28 @@ async function archiveProject(key) {
   } catch (error) {
     console.error('Archive project failed', error);
     showToast('Could not archive project. Please try again.', 'error');
+  }
+}
+async function restoreProject(key) {
+  if (session.role !== 'admin') {
+    showToast('Only admin can restore projects.', 'error');
+    return;
+  }
+
+  const ok = window.confirm('Restore this project back to All Projects?');
+  if (!ok) return;
+
+  try {
+    await saveProjectSettings(key, {
+      archived: false,
+      archivedAt: null,
+    });
+
+    showToast('Project restored.', 'success');
+    navigate('/hub');
+  } catch (error) {
+    console.error('Restore project failed', error);
+    showToast('Could not restore project. Please try again.', 'error');
   }
 }
 /* ════════════════════════════════════
@@ -2212,6 +2257,7 @@ window.syncProjectSlug = syncProjectSlug;
 window.submitCreateProject = submitCreateProject;
 window.submitProjectSettings = submitProjectSettings;
 window.archiveProject = archiveProject;
+window.restoreProject = restoreProject;
 window.renderPublicForm = renderPublicForm;
 window.toggleBoothForm = toggleBoothForm;
 window.saveBoothLead   = saveBoothLead;
