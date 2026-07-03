@@ -795,6 +795,85 @@ const newProjectCard = session.role === 'admin'
     ${archivedSection}
   `, 'All Projects');
 }
+
+/* ════════════════════════════════════
+   HOT / WARM / COLD SCORING SETTINGS
+════════════════════════════════════ */
+function scoringSettingsHTML(cfg) {
+  const isCustom = !!cfg.customScoring;
+  const rules = cfg.scoringRules || BHARATTEX_DEFAULT.scoringRules;
+  const w = rules.weights;
+  const initialTotal = Object.values(w).reduce((sum, v) => sum + (Number(v) || 0), 0);
+
+  const weightField = (id, label, value) => `
+    <div class="field">
+      <label>${label}</label>
+      <input type="number" id="${id}" min="0" value="${esc(value)}" oninput="updateScoringTotalHint()">
+    </div>`;
+
+  return `
+    <div class="card-header" style="margin-top:28px">
+      <h3><span class="material-symbols-outlined">local_fire_department</span> Hot / Warm / Cold Scoring</h3>
+    </div>
+
+    <div class="field">
+      <label>Scoring mode</label>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <button type="button" id="scoring-mode-default" class="filter-pill${!isCustom ? ' on' : ''}" onclick="setScoringMode(false)">System Default</button>
+        <button type="button" id="scoring-mode-custom" class="filter-pill${isCustom ? ' on' : ''}" onclick="setScoringMode(true)">Custom Logic</button>
+      </div>
+      <input type="hidden" id="sc-mode" value="${isCustom ? 'custom' : 'default'}">
+      <small style="display:block;margin-top:6px;color:var(--muted)">System Default uses NYTG's standard scoring. Custom Logic lets you set your own thresholds and weights.</small>
+    </div>
+
+    <div id="scoring-custom-fields" style="display:${isCustom ? 'block' : 'none'}">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px">
+        <div class="field">
+          <label>Hot threshold (score ≥)</label>
+          <input type="number" id="sc-hot" min="0" max="100" value="${esc(rules.thresholds.hot)}">
+        </div>
+        <div class="field">
+          <label>Warm threshold (score ≥)</label>
+          <input type="number" id="sc-warm" min="0" max="100" value="${esc(rules.thresholds.warm)}">
+        </div>
+      </div>
+
+      <label style="display:block;margin-top:16px;font-weight:600">Points per signal</label>
+      <small style="display:block;margin-bottom:10px;color:var(--muted)">Should add up to 100 for scores to stay meaningful.</small>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+        ${weightField('sc-w-fabric', 'Fabric interest selected', w.fabricInterest)}
+        ${weightField('sc-w-apparel', 'Product/apparel interest selected', w.apparelInterest)}
+        ${weightField('sc-w-message', 'Message / specific request', w.message)}
+        ${weightField('sc-w-booth', 'Source is booth / event / trade show', w.boothSource)}
+        ${weightField('sc-w-sales', 'Salesperson assigned', w.salesperson)}
+        ${weightField('sc-w-company', 'Company provided', w.company)}
+        ${weightField('sc-w-email', 'Email provided', w.email)}
+      </div>
+
+      <div id="sc-total-hint" style="margin-top:10px;font-size:12px;font-weight:600;color:${initialTotal === 100 ? 'var(--teal)' : '#B45309'}">Total weight: ${initialTotal} / 100</div>
+    </div>
+  `;
+}
+
+function setScoringMode(isCustom) {
+  document.getElementById('scoring-mode-default')?.classList.toggle('on', !isCustom);
+  document.getElementById('scoring-mode-custom')?.classList.toggle('on', isCustom);
+  const fields = document.getElementById('scoring-custom-fields');
+  if (fields) fields.style.display = isCustom ? 'block' : 'none';
+  const mode = document.getElementById('sc-mode');
+  if (mode) mode.value = isCustom ? 'custom' : 'default';
+}
+
+function updateScoringTotalHint() {
+  const ids = ['sc-w-fabric', 'sc-w-apparel', 'sc-w-message', 'sc-w-booth', 'sc-w-sales', 'sc-w-company', 'sc-w-email'];
+  const total = ids.reduce((sum, id) => sum + (Number(document.getElementById(id)?.value) || 0), 0);
+  const hint = document.getElementById('sc-total-hint');
+  if (!hint) return;
+  hint.textContent = `Total weight: ${total} / 100`;
+  hint.style.color = total === 100 ? 'var(--teal)' : '#B45309';
+}
+
 async function renderSettingsPage() {
   if (!currentProject || session.role !== 'admin') {
     navigate('/hub');
@@ -884,6 +963,9 @@ async function renderSettingsPage() {
         <textarea id="st-salespeople" rows="5" placeholder="One salesperson per line">${esc((currentProject.salespeople || []).join('\n'))}</textarea>
         <small style="display:block;margin-top:6px;color:var(--muted)">พิมพ์ 1 ชื่อต่อ 1 บรรทัด กด Enter เพื่อเพิ่มชื่อใหม่</small>
       </div>
+
+      ${scoringSettingsHTML(currentProject)}
+
 <div style="display:flex;gap:12px;justify-content:space-between;margin-top:24px;flex-wrap:wrap">
   <button class="btn-secondary" style="color:#b91c1c;border-color:#fecaca" onclick="archiveProject('${currentProject.key}')">
     <span class="material-symbols-outlined">archive</span>
@@ -1082,6 +1164,36 @@ const sources = sourceLines.map(label => {
     return;
   }
 
+  const customScoring = document.getElementById('sc-mode')?.value === 'custom';
+  let scoringRules = currentProject.scoringRules || BHARATTEX_DEFAULT.scoringRules;
+
+  if (customScoring) {
+    const hot = Number(document.getElementById('sc-hot')?.value);
+    const warm = Number(document.getElementById('sc-warm')?.value);
+    const weights = {
+      fabricInterest:  Number(document.getElementById('sc-w-fabric')?.value) || 0,
+      apparelInterest: Number(document.getElementById('sc-w-apparel')?.value) || 0,
+      message:         Number(document.getElementById('sc-w-message')?.value) || 0,
+      boothSource:     Number(document.getElementById('sc-w-booth')?.value) || 0,
+      salesperson:     Number(document.getElementById('sc-w-sales')?.value) || 0,
+      company:         Number(document.getElementById('sc-w-company')?.value) || 0,
+      email:           Number(document.getElementById('sc-w-email')?.value) || 0,
+    };
+
+    if (!Number.isFinite(hot) || !Number.isFinite(warm) || hot <= warm) {
+      showToast('Hot threshold must be a number greater than Warm threshold.', 'error');
+      return;
+    }
+
+    const totalWeight = Object.values(weights).reduce((sum, val) => sum + val, 0);
+    if (totalWeight > 100) {
+      showToast(`Weights add up to ${totalWeight}, which is over 100. Please reduce them.`, 'error');
+      return;
+    }
+
+    scoringRules = { thresholds: { hot, warm }, weights };
+  }
+
   try {
 await saveProjectSettings(currentProject.key, {
   eventName,
@@ -1095,6 +1207,8 @@ await saveProjectSettings(currentProject.key, {
    salespeople,
    estimatedOrderQuantityOptions: quantityOptions,
 followUpOptions,
+customScoring,
+scoringRules,
 });
 currentProject = {
   ...currentProject,
@@ -1109,6 +1223,8 @@ currentProject = {
    salespeople,
    estimatedOrderQuantityOptions: quantityOptions,
 followUpOptions,
+customScoring,
+scoringRules,
 };
 
     showToast('Settings saved.', 'success');
@@ -1892,7 +2008,7 @@ function toggleChip(el, group) {
    PUBLIC FORM SUBMIT
 ════════════════════════════════════ */
 function scoreLead(data, cfg) {
-  const rules = cfg.scoringRules || BHARATTEX_DEFAULT.scoringRules || {};
+  const rules = (cfg.customScoring && cfg.scoringRules) ? cfg.scoringRules : (BHARATTEX_DEFAULT.scoringRules || {});
   const weights = rules.weights || {};
   const thresholds = rules.thresholds || { hot: 70, warm: 35 };
   let score = 0;
@@ -2564,6 +2680,8 @@ window.submitPublicForm = submitPublicForm;
 window.syncProjectSlug = syncProjectSlug;
 window.submitCreateProject = submitCreateProject;
 window.submitProjectSettings = submitProjectSettings;
+window.setScoringMode = setScoringMode;
+window.updateScoringTotalHint = updateScoringTotalHint;
 window.archiveProject = archiveProject;
 window.restoreProject = restoreProject;
 window.deleteProject = deleteProject;
