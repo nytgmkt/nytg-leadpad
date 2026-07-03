@@ -739,13 +739,51 @@ const newProjectCard = session.role === 'admin'
   `
   : '';
 
+  const archivedHtml = archivedProjects.length
+    ? archivedProjects.map(project => `
+      <div class="project-card archived-project-card">
+        <div class="project-icon">
+          <span class="material-symbols-outlined">archive</span>
+        </div>
+        <h3>${esc(project.eventName || project.key)}</h3>
+        <p>${esc(project.orgName || '')}${project.venueLine ? ' · ' + esc(project.venueLine) : ''}</p>
+        <div class="project-meta">
+          <span>${project.leadCount || 0} leads</span>
+          <span>/${esc(project.key)}</span>
+        </div>
+        <button class="btn-secondary" style="margin-top:14px" onclick="event.stopPropagation(); restoreProject('${project.key}')">
+          Restore Project
+        </button>
+      </div>
+    `).join('')
+    : `
+      <div class="empty">
+        <span class="material-symbols-outlined">archive</span>
+        <div>No archived projects.</div>
+      </div>`;
+
+  const archivedSection = session.role === 'admin'
+    ? `
+      <div class="page-head" style="margin-top:28px">
+        <div>
+          <h2>Archived Projects</h2>
+          <p>Hidden projects. Leads are still stored and can be restored.</p>
+        </div>
+      </div>
+
+      <div class="projects-grid">
+        ${archivedHtml}
+      </div>
+    `
+    : '';
+
   renderPage(`
     <div class="page-head">
       <div>
         <h1>All Projects</h1>
         <p>Click a project to open its dashboard.</p>
       </div>
- 
+
     </div>
 
     <div class="projects-grid">
