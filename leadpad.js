@@ -710,50 +710,34 @@ async function renderHub() {
   }
 
 const newProjectCard = session.role === 'admin'
-  ? `<button class="project-card project-card-new" onclick="navigate('/projects/new')">
-      <span class="material-symbols-outlined">add_circle</span>
-      <strong>Create New Project</strong>
-      <small>Create another event workspace</small>
-    </button>`
+  ? `
+    <div style="display:flex;justify-content:center;margin-top:18px">
+      <button
+        class="btn-primary"
+        style="
+          display:inline-flex;
+          align-items:center;
+          justify-content:center;
+          gap:10px;
+          min-height:48px;
+          padding:0 28px;
+          border-radius:10px;
+          background:#0b57d0;
+          color:#fff;
+          border:0;
+          font-weight:700;
+          font-size:15px;
+          box-shadow:0 8px 18px rgba(11,87,208,.22);
+          cursor:pointer;
+        "
+        onclick="navigate('/projects/new')"
+      >
+        <span class="material-symbols-outlined" style="font-size:20px;color:#fff">add</span>
+        Create New Project
+      </button>
+    </div>
+  `
   : '';
-
-  const archivedHtml = archivedProjects.length
-    ? archivedProjects.map(project => `
-      <div class="project-card archived-project-card">
-        <div class="project-icon">
-          <span class="material-symbols-outlined">archive</span>
-        </div>
-        <h3>${esc(project.eventName || project.key)}</h3>
-        <p>${esc(project.orgName || '')}${project.venueLine ? ' · ' + esc(project.venueLine) : ''}</p>
-        <div class="project-meta">
-          <span>${project.leadCount || 0} leads</span>
-          <span>/${esc(project.key)}</span>
-        </div>
-        <button class="btn-secondary" style="margin-top:14px" onclick="event.stopPropagation(); restoreProject('${project.key}')">
-          Restore Project
-        </button>
-      </div>
-    `).join('')
-    : `
-      <div class="empty">
-        <span class="material-symbols-outlined">archive</span>
-        <div>No archived projects.</div>
-      </div>`;
-
-  const archivedSection = session.role === 'admin'
-    ? `
-      <div class="page-head" style="margin-top:28px">
-        <div>
-          <h2>Archived Projects</h2>
-          <p>Hidden projects. Leads are still stored and can be restored.</p>
-        </div>
-      </div>
-
-      <div class="projects-grid">
-        ${archivedHtml}
-      </div>
-    `
-    : '';
 
   renderPage(`
     <div class="page-head">
