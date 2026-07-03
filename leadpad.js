@@ -1516,6 +1516,8 @@ async function renderDashPage() {
         Loading leads…
       </div>
     </div>
+
+    <div id="dash-table-wrap" class="lead-table-wrap"></div>
   `);
 
   activeFilter = 'All';
@@ -1553,6 +1555,9 @@ function renderDashList() {
   el.innerHTML = filtered.length
     ? filtered.map(l => leadHTML(l, currentProject)).join('')
     : '<div class="empty"><span class="material-symbols-outlined">search_off</span>No leads match this filter.</div>';
+
+  const tableEl = document.getElementById('dash-table-wrap');
+  if (tableEl) tableEl.innerHTML = leadTableHTML(filtered, currentProject);
 }
 
 function renderDashboardWidgets() {
@@ -2201,6 +2206,90 @@ return `<div class="lead-card">
 }
 
 /* ════════════════════════════════════
+   LEAD TABLE (desktop spreadsheet view)
+════════════════════════════════════ */
+function leadRowHTML(l, cfg) {
+  const key = l._key || l.id;
+  const isAdmin = session.role === 'admin';
+
+  const priorityOptions = cfg.priorities.map(p =>
+    `<option${(l.manualTemp || l.priority) === p.value ? ' selected' : ''} value="${esc(p.value)}">${p.label}</option>`
+  ).join('');
+
+  const editableCell = (field, value) => isAdmin
+    ? `<td contenteditable="true" data-key="${key}" data-field="${field}" onblur="saveTableCell(this)" onkeydown="tableCellKeydown(event)">${esc(value || '')}</td>`
+    : `<td>${esc(value || '')}</td>`;
+
+  const deleteBtn = isAdmin
+    ? `<button title="Delete lead" style="background:none;border:0;cursor:pointer;color:#E24B4A;padding:4px;display:flex" onclick="deleteLead('${key}')">
+         <span class="material-symbols-outlined" style="font-size:18px">delete</span>
+       </button>`
+    : '';
+
+  return `<tr>
+    <td class="cell-readonly">${esc(l.time)}</td>
+    ${editableCell('name', l.name)}
+    ${editableCell('company', l.company)}
+    ${editableCell('email', l.email)}
+    ${editableCell('country', l.country)}
+    <td class="cell-readonly">${esc(l.source)}</td>
+    ${editableCell('fabric', l.fabric)}
+    ${editableCell('apparel', l.apparel)}
+    ${editableCell('salesperson', l.salesperson)}
+    <td>
+      <select class="priority-select" onchange="updateLeadTemp('${key}', this.value)">
+        ${priorityOptions}
+      </select>
+    </td>
+    ${editableCell('note', l.note)}
+    <td>${deleteBtn}</td>
+  </tr>`;
+}
+
+function leadTableHTML(rows, cfg) {
+  if (!rows.length) {
+    return '<div class="empty"><span class="material-symbols-outlined">search_off</span>No leads match this filter.</div>';
+  }
+  return `<table class="lead-table">
+    <thead>
+      <tr>
+        <th>Time</th><th>Name</th><th>Company</th><th>Email</th><th>Country</th>
+        <th>Source</th><th>Fabric</th><th>Apparel</th><th>Salesperson</th>
+        <th>Priority</th><th>Note</th><th></th>
+      </tr>
+    </thead>
+    <tbody>${rows.map(l => leadRowHTML(l, cfg)).join('')}</tbody>
+  </table>`;
+}
+
+function tableCellKeydown(e) {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  e.target.blur();
+}
+
+async function saveTableCell(el) {
+  if (!currentProject) return;
+  const key = el.dataset.key;
+  const field = el.dataset.field;
+  const value = el.textContent.trim();
+
+  if (field === 'name' && !value) {
+    const lead = leads.find(l => (l._key || l.id) === key);
+    el.textContent = lead ? lead.name : '';
+    showToast('Name is required.', 'error');
+    return;
+  }
+
+  try {
+    await updateLeadInProject(currentProject.key, key, { [field]: value });
+  } catch (error) {
+    console.error('Update lead cell failed', error);
+    showToast('Could not save change. Please try again.', 'error');
+  }
+}
+
+/* ════════════════════════════════════
    LEAD ACTIONS
 ════════════════════════════════════ */
 async function updateLeadTemp(key, val) {
@@ -2489,6 +2578,8 @@ window.openEditLead    = openEditLead;
 window.closeEditLead   = closeEditLead;
 window.saveEditLead    = saveEditLead;
 window.shiftTimeline   = shiftTimeline;
+window.saveTableCell   = saveTableCell;
+window.tableCellKeydown = tableCellKeydown;
 window.setFilter       = setFilter;
 window.renderDashList  = renderDashList;
 window.renderBoothList = renderBoothList;

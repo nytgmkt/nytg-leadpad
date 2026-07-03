@@ -220,6 +220,23 @@ textarea{resize:vertical;min-height:80px}
 .timeline-count{font-family:'DM Mono',monospace;font-size:11px;font-weight:700;color:var(--ink)}
 .timeline-label{font-size:10px;color:var(--muted);white-space:nowrap}
 .lead-list{display:flex;flex-direction:column;gap:10px}
+.lead-table-wrap{display:none;overflow-x:auto;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--surface)}
+.lead-table{width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap}
+.lead-table th{
+  position:sticky;top:0;background:var(--surface2);text-align:left;padding:10px 12px;
+  font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);
+  border-bottom:1px solid var(--border);
+}
+.lead-table td{padding:8px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.lead-table tr:hover{background:var(--surface2)}
+.lead-table td.cell-readonly{color:var(--muted)}
+.lead-table td[contenteditable="true"]{cursor:text}
+.lead-table td[contenteditable="true"]:hover{background:var(--primary-lt)}
+.lead-table td[contenteditable="true"]:focus{outline:2px solid var(--primary);outline-offset:-2px;background:var(--surface);white-space:normal}
+@media (min-width:861px){
+  #dash-list.lead-list{display:none}
+  .lead-table-wrap{display:block}
+}
 .lead-card{
   background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);
   padding:14px 16px;
