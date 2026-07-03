@@ -2125,6 +2125,17 @@ function leadHTML(l, cfg) {
 
  const key = l._key || l.id;
 
+ const adminActions = session.role === 'admin'
+   ? `<div style="display:flex;gap:2px;margin-left:4px;flex-shrink:0">
+       <button title="Edit lead" style="background:none;border:0;cursor:pointer;color:var(--muted);padding:4px;display:flex" onclick="openEditLead('${key}')">
+         <span class="material-symbols-outlined" style="font-size:18px">edit</span>
+       </button>
+       <button title="Delete lead" style="background:none;border:0;cursor:pointer;color:#E24B4A;padding:4px;display:flex" onclick="deleteLead('${key}')">
+         <span class="material-symbols-outlined" style="font-size:18px">delete</span>
+       </button>
+     </div>`
+   : '';
+
 return `<div class="lead-card">
   <div class="lead-card-top">
     <div class="lead-avatar">${initials(l.name)}</div>
@@ -2139,6 +2150,8 @@ return `<div class="lead-card">
         ${priorityOptions}
       </select>
     </div>
+
+    ${adminActions}
   </div>
 
   <div class="badges">
@@ -2174,6 +2187,92 @@ async function saveNote(key) {
   const note = document.getElementById('note-' + key).value.trim();
   await updateLeadInProject(currentProject.key, key, { note });
   showToast('Note saved!', 'success');
+}
+
+async function deleteLead(key) {
+  if (!currentProject || session.role !== 'admin') {
+    showToast('Only admin can delete leads.', 'error');
+    return;
+  }
+
+  const ok = window.confirm('Delete this lead permanently?\n\nThis cannot be undone.');
+  if (!ok) return;
+
+  try {
+    await remove(ref(db, `projects/${currentProject.key}/leads/${key}`));
+    showToast('Lead deleted.', 'success');
+  } catch (error) {
+    console.error('Delete lead failed', error);
+    showToast('Could not delete lead. Please try again.', 'error');
+  }
+}
+
+function openEditLead(key) {
+  if (!currentProject || session.role !== 'admin') return;
+  const lead = leads.find(l => (l._key || l.id) === key);
+  if (!lead) return;
+
+  closeEditLead();
+
+  const field = (id, label, value) => `
+    <label style="font-size:12px;font-weight:600;color:var(--muted)">${label}
+      <input id="${id}" value="${esc(value || '')}" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius);margin-top:4px;font-size:14px;box-sizing:border-box">
+    </label>`;
+
+  const modal = document.createElement('div');
+  modal.id = 'edit-lead-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:500;display:flex;align-items:center;justify-content:center;padding:20px';
+  modal.innerHTML = `
+    <div style="background:var(--surface);border-radius:var(--radius-xl);padding:24px;width:100%;max-width:420px;max-height:90vh;overflow-y:auto">
+      <h3 style="font-size:18px;font-weight:800;margin-bottom:16px">Edit Lead</h3>
+
+      <div style="display:flex;flex-direction:column;gap:12px">
+        ${field('edit-name', 'Name', lead.name)}
+        ${field('edit-company', 'Company', lead.company)}
+        ${field('edit-email', 'Email', lead.email)}
+        ${field('edit-country', 'Country', lead.country)}
+        ${field('edit-salesperson', 'Salesperson', lead.salesperson)}
+        ${field('edit-fabric', 'Fabric interest', lead.fabric)}
+        <label style="font-size:12px;font-weight:600;color:var(--muted)">Message
+          <textarea id="edit-msg" rows="3" style="width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:var(--radius);margin-top:4px;font-size:14px;resize:vertical;box-sizing:border-box">${esc(lead.msg || '')}</textarea>
+        </label>
+      </div>
+
+      <div style="display:flex;gap:10px;margin-top:20px;justify-content:flex-end">
+        <button class="btn-secondary" onclick="closeEditLead()">Cancel</button>
+        <button class="btn-primary" onclick="saveEditLead('${key}')">Save changes</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+}
+
+function closeEditLead() {
+  document.getElementById('edit-lead-modal')?.remove();
+}
+
+async function saveEditLead(key) {
+  const name = document.getElementById('edit-name').value.trim();
+  if (!name) { showToast('Name is required.', 'error'); return; }
+
+  const fields = {
+    name,
+    company:     document.getElementById('edit-company').value.trim(),
+    email:       document.getElementById('edit-email').value.trim(),
+    country:     document.getElementById('edit-country').value.trim(),
+    salesperson: document.getElementById('edit-salesperson').value.trim(),
+    fabric:      document.getElementById('edit-fabric').value.trim(),
+    msg:         document.getElementById('edit-msg').value.trim(),
+  };
+
+  try {
+    await updateLeadInProject(currentProject.key, key, fields);
+    closeEditLead();
+    showToast('Lead updated.', 'success');
+  } catch (error) {
+    console.error('Update lead failed', error);
+    showToast('Could not update lead. Please try again.', 'error');
+  }
 }
 
 /* ════════════════════════════════════
@@ -2359,6 +2458,10 @@ window.saveBoothLead   = saveBoothLead;
 window.exportCSV       = exportCSV;
 window.updateLeadTemp  = updateLeadTemp;
 window.saveNote        = saveNote;
+window.deleteLead      = deleteLead;
+window.openEditLead    = openEditLead;
+window.closeEditLead   = closeEditLead;
+window.saveEditLead    = saveEditLead;
 window.setFilter       = setFilter;
 window.renderDashList  = renderDashList;
 window.renderBoothList = renderBoothList;
