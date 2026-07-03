@@ -85,6 +85,7 @@ let selectedSource = '';
 
 let activeFilter = 'All';
 let boothFormOpen = false;
+let timelineWeekOffset = 0;
 
 function loadSession() {
   try { return JSON.parse(sessionStorage.getItem(SESSION_KEY)) || { role: null, projectKey: null }; }
@@ -1518,6 +1519,7 @@ async function renderDashPage() {
   `);
 
   activeFilter = 'All';
+  timelineWeekOffset = 0;
   await loadLeadsOnce(cfg.key);
   subscribeLeads(cfg.key);
 }
@@ -1602,7 +1604,8 @@ function barWidget(title, sub, rows, color) {
 }
 
 function timelineWidget() {
-  const rows = lastSevenDays().map(day => ({
+  const days = lastSevenDays(timelineWeekOffset);
+  const rows = days.map(day => ({
     ...day,
     value: leads.filter(l => leadDateKey(l) === day.key).length,
   }));
@@ -1615,13 +1618,36 @@ function timelineWidget() {
       <div class="timeline-label">${esc(r.label)}</div>
     </div>`;
   }).join('');
+
+  const rangeLabel = timelineWeekOffset === 0
+    ? 'Leads over the last 7 days'
+    : `${days[0].label} – ${days[6].label}`;
+  const nextDisabled = timelineWeekOffset >= 0 ? 'disabled' : '';
+
   return `<div class="dash-widget dash-widget-wide">
     <div class="widget-head">
-      <div class="widget-title">Timeline</div>
-      <div class="widget-sub">Leads over the last 7 days</div>
+      <div>
+        <div class="widget-title">Timeline</div>
+        <div class="widget-sub">${rangeLabel}</div>
+      </div>
+      <div style="display:flex;gap:4px">
+        <button title="Previous 7 days" style="background:none;border:1.5px solid var(--border);border-radius:var(--radius);cursor:pointer;padding:2px;display:flex" onclick="shiftTimeline(-1)">
+          <span class="material-symbols-outlined" style="font-size:18px">chevron_left</span>
+        </button>
+        <button title="Next 7 days" style="background:none;border:1.5px solid var(--border);border-radius:var(--radius);padding:2px;display:flex;cursor:${nextDisabled ? 'not-allowed' : 'pointer'};opacity:${nextDisabled ? '.4' : '1'}" ${nextDisabled} onclick="shiftTimeline(1)">
+          <span class="material-symbols-outlined" style="font-size:18px">chevron_right</span>
+        </button>
+      </div>
     </div>
     <div class="timeline-bars">${bars}</div>
   </div>`;
+}
+
+function shiftTimeline(delta) {
+  const next = timelineWeekOffset + delta;
+  if (next > 0) return;
+  timelineWeekOffset = next;
+  renderDashboardWidgets();
 }
 
 function countByCsv(items, field) {
@@ -1652,12 +1678,12 @@ function leadTemp(lead) {
   return lead.manualTemp || lead.autoTemp || lead.priority || 'Warm';
 }
 
-function lastSevenDays() {
+function lastSevenDays(weekOffset = 0) {
   const days = [];
   const today = new Date();
   for (let i = 6; i >= 0; i--) {
     const d = new Date(today);
-    d.setDate(today.getDate() - i);
+    d.setDate(today.getDate() - i + weekOffset * 7);
     days.push({
       key: dateKey(d),
       label: d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }),
@@ -2462,6 +2488,7 @@ window.deleteLead      = deleteLead;
 window.openEditLead    = openEditLead;
 window.closeEditLead   = closeEditLead;
 window.saveEditLead    = saveEditLead;
+window.shiftTimeline   = shiftTimeline;
 window.setFilter       = setFilter;
 window.renderDashList  = renderDashList;
 window.renderBoothList = renderBoothList;
