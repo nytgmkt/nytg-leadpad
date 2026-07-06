@@ -1855,6 +1855,11 @@ function formatLeadTime(lead) {
   return '';
 }
 
+function formatLeadApparel(lead) {
+  if (Array.isArray(lead.productType)) return lead.productType.join(', ');
+  return lead.apparelType || lead.apparel || '';
+}
+
 /* ─── BOOTH PAGE ─── */
 async function renderBoothPage() {
   const cfg = currentProject;
@@ -2267,7 +2272,8 @@ function leadHTML(l, cfg) {
   const pClass = pCfg ? pCfg.badgeClass : 'badge-gray';
   const srcClass = l.source === 'Booth' ? 'badge-purple' : 'badge-gray';
   const salesBadge = l.salesperson ? `<span class="badge badge-gray">👤 ${esc(l.salesperson)}</span>` : '';
-  const appParts = l.apparel ? l.apparel.split(', ') : [];
+  const apparelText = formatLeadApparel(l);
+  const appParts = apparelText ? apparelText.split(', ') : [];
   const appBadge = appParts.length
     ? `<span class="badge badge-gray">${esc(appParts[0])}${appParts.length > 1 ? ' +' + (appParts.length - 1) : ''}</span>` : '';
 
@@ -2366,7 +2372,7 @@ function leadRowHTML(l, cfg) {
     ${editableCell('country', l.country)}
     <td class="cell-readonly">${esc(l.source)}</td>
     ${editableCell('fabric', l.fabric)}
-    ${editableCell('apparel', l.apparel)}
+    ${editableCell('apparel', formatLeadApparel(l))}
     ${editableCell('salesperson', l.salesperson)}
     <td>
       <select class="priority-select" onchange="updateLeadTemp('${key}', this.value)">
