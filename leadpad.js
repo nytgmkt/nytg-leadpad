@@ -1839,6 +1839,12 @@ function dateKey(date) {
   ].join('-');
 }
 
+function formatLeadTime(lead) {
+  if (lead.time) return lead.time;
+  if (lead.createdAt) return new Date(Number(lead.createdAt)).toLocaleString();
+  return '';
+}
+
 /* ─── BOOTH PAGE ─── */
 async function renderBoothPage() {
   const cfg = currentProject;
@@ -2317,7 +2323,7 @@ return `<div class="lead-card">
     <button class="btn-secondary" style="font-size:12px;padding:5px 12px;flex-shrink:0" onclick="saveNote('${key}')">Save</button>
   </div>
 
-  <div class="lead-time">${esc(l.time)}</div>
+  <div class="lead-time">${esc(formatLeadTime(l))}</div>
 </div>`;
 }
 
@@ -2343,7 +2349,7 @@ function leadRowHTML(l, cfg) {
     : '';
 
   return `<tr>
-    <td class="cell-readonly">${esc(l.time)}</td>
+    <td class="cell-readonly">${esc(formatLeadTime(l))}</td>
     ${editableCell('name', l.name)}
     ${editableCell('company', l.company)}
     ${editableCell('email', l.email)}
@@ -2533,12 +2539,6 @@ function exportCSV() {
     'Time'
   ];
 
-  const formatExportTime = (lead) => {
-    if (lead.time) return lead.time;
-    if (lead.createdAt) return new Date(Number(lead.createdAt)).toLocaleString();
-    return '';
-  };
-
   const formatList = (value) => {
     if (Array.isArray(value)) return value.filter(Boolean).join(' / ');
     return value || '';
@@ -2594,7 +2594,7 @@ function exportCSV() {
       formatMessage(l),
       temp,
       l.note,
-      formatExportTime(l)
+      formatLeadTime(l)
     ]
       .map(v => `"${String(v || '').replace(/"/g, '""')}"`)
       .join(',');
