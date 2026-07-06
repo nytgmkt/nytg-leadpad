@@ -808,7 +808,7 @@ function scoringSettingsHTML(cfg) {
   const weightField = (id, label, value) => `
     <div class="field">
       <label>${label}</label>
-      <input type="number" id="${id}" min="0" value="${esc(value)}" oninput="updateScoringTotalHint()">
+      <input type="number" id="${id}" min="0" value="${Number(value) || 0}" oninput="updateScoringTotalHint()">
     </div>`;
 
   return `
@@ -830,11 +830,11 @@ function scoringSettingsHTML(cfg) {
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:12px">
         <div class="field">
           <label>Hot threshold (score ≥)</label>
-          <input type="number" id="sc-hot" min="0" max="100" value="${esc(rules.thresholds.hot)}">
+          <input type="number" id="sc-hot" min="0" max="100" value="${Number(rules.thresholds.hot) || 0}">
         </div>
         <div class="field">
           <label>Warm threshold (score ≥)</label>
-          <input type="number" id="sc-warm" min="0" max="100" value="${esc(rules.thresholds.warm)}">
+          <input type="number" id="sc-warm" min="0" max="100" value="${Number(rules.thresholds.warm) || 0}">
         </div>
       </div>
 
@@ -1180,14 +1180,24 @@ const sources = sourceLines.map(label => {
       email:           Number(document.getElementById('sc-w-email')?.value) || 0,
     };
 
-    if (!Number.isFinite(hot) || !Number.isFinite(warm) || hot <= warm) {
-      showToast('Hot threshold must be a number greater than Warm threshold.', 'error');
+    if (!Number.isFinite(hot) || !Number.isFinite(warm) || hot < 0 || warm < 0 || hot <= warm) {
+      showToast('Hot threshold must be a number greater than Warm threshold, and both must be 0 or higher.', 'error');
+      return;
+    }
+
+    if (Object.values(weights).some(val => val < 0)) {
+      showToast('Points per signal cannot be negative.', 'error');
       return;
     }
 
     const totalWeight = Object.values(weights).reduce((sum, val) => sum + val, 0);
     if (totalWeight > 100) {
       showToast(`Weights add up to ${totalWeight}, which is over 100. Please reduce them.`, 'error');
+      return;
+    }
+
+    if (hot > totalWeight) {
+      showToast(`Hot threshold (${hot}) is higher than the maximum possible score (${totalWeight}). No lead could ever reach Hot — lower the threshold or raise the weights.`, 'error');
       return;
     }
 
