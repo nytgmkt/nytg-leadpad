@@ -1379,7 +1379,8 @@ const quantityHtml = quantityOptions
   .map(option => `<option>${esc(option)}</option>`)
   .join('');
 
-const followUpHtml = followUpOptions
+const hasNoNeedOption = followUpOptions.some(option => option.trim().toLowerCase() === 'no need, just send moodboard');
+const followUpHtml = (hasNoNeedOption ? followUpOptions : [...followUpOptions, 'No need, just send moodboard'])
   .map(option => `<option>${esc(option)}</option>`)
   .join('');
   let spInner = '';
@@ -1519,9 +1520,8 @@ ${quantityHtml}
           </div>
           <div class="field">
             <label>How would you like us to follow up?</label>
-            <select id="f-follow-up" onchange="const method=this.value; const needsNumber=method==='WhatsApp'||method==='Phone call'; const needsLine=method==='Line'; document.getElementById('follow-up-contact-field').style.display=(needsNumber||needsLine)?'block':'none'; document.getElementById('follow-up-phone-fields').style.display=needsNumber?'grid':'none'; document.getElementById('follow-up-line-field').style.display=needsLine?'block':'none'; document.getElementById('follow-up-country-code-other-field').style.display='none';">
+            <select id="f-follow-up" onchange="const method=this.value; const needsNumber=needsPhoneContact(method); const needsLine=needsLineContact(method); document.getElementById('follow-up-contact-field').style.display=(needsNumber||needsLine)?'block':'none'; document.getElementById('follow-up-phone-fields').style.display=needsNumber?'grid':'none'; document.getElementById('follow-up-line-field').style.display=needsLine?'block':'none'; document.getElementById('follow-up-country-code-other-field').style.display='none';">
 ${followUpHtml}
-              <option>No need, just send moodboard</option>
             </select>
           </div>
         </div>
@@ -2082,7 +2082,7 @@ async function submitPublicForm() {
   let followUpCountryCode = '';
   let followUpContact = '';
 
-  if (followUpPreference === 'WhatsApp' || followUpPreference === 'Phone call') {
+  if (needsPhoneContact(followUpPreference)) {
     const codeSelect = document.getElementById('f-follow-up-country-code')?.value.trim() || '';
     const codeOther = document.getElementById('f-follow-up-country-code-other')?.value.trim() || '';
     followUpCountryCode = codeSelect === 'Other' ? codeOther : codeSelect;
@@ -2090,7 +2090,7 @@ async function submitPublicForm() {
     followUpContact = [followUpCountryCode, number].filter(Boolean).join(' ');
   }
 
-  if (followUpPreference === 'Line') {
+  if (needsLineContact(followUpPreference)) {
     followUpContact = document.getElementById('f-follow-up-line')?.value.trim() || '';
   }
 
@@ -2119,17 +2119,17 @@ async function submitPublicForm() {
     return;
   }
 
-  if ((followUpPreference === 'WhatsApp' || followUpPreference === 'Phone call') && !followUpContact) {
+  if (needsPhoneContact(followUpPreference) && !followUpContact) {
     showToast('Please enter your follow-up contact.', 'error');
     return;
   }
 
-  if ((followUpPreference === 'WhatsApp' || followUpPreference === 'Phone call') && !followUpCountryCode) {
+  if (needsPhoneContact(followUpPreference) && !followUpCountryCode) {
     showToast('Please select country code.', 'error');
     return;
   }
 
-  if (followUpPreference === 'Line' && !followUpContact) {
+  if (needsLineContact(followUpPreference) && !followUpContact) {
     showToast('Please enter your Line ID.', 'error');
     return;
   }
@@ -2634,6 +2634,14 @@ function esc(s) {
   return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+function needsPhoneContact(method) {
+  const text = String(method || '').toLowerCase();
+  return text.includes('whatsapp') || text.includes('phone');
+}
+function needsLineContact(method) {
+  return String(method || '').toLowerCase().includes('line');
+}
+
 /* ════════════════════════════════════
    TOAST
 ════════════════════════════════════ */
@@ -2692,6 +2700,8 @@ window.submitCreateProject = submitCreateProject;
 window.submitProjectSettings = submitProjectSettings;
 window.setScoringMode = setScoringMode;
 window.updateScoringTotalHint = updateScoringTotalHint;
+window.needsPhoneContact = needsPhoneContact;
+window.needsLineContact = needsLineContact;
 window.archiveProject = archiveProject;
 window.restoreProject = restoreProject;
 window.deleteProject = deleteProject;
