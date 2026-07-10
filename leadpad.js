@@ -874,6 +874,54 @@ function updateScoringTotalHint() {
   hint.style.color = total === 100 ? 'var(--teal)' : '#B45309';
 }
 
+/* ════════════════════════════════════
+   CONFIRMATION EMAIL SETTINGS
+════════════════════════════════════ */
+function emailSettingsHTML(cfg) {
+  const sendEmail = cfg.sendConfirmationEmail !== false;
+
+  return `
+    <div class="card-header" style="margin-top:28px">
+      <h3><span class="material-symbols-outlined">mail</span> Confirmation Email</h3>
+    </div>
+
+    <div class="field">
+      <label>After a visitor submits the form</label>
+      <div style="display:flex;gap:8px;margin-top:6px">
+        <button type="button" id="email-mode-on" class="filter-pill${sendEmail ? ' on' : ''}" onclick="setEmailMode(true)">Send Email</button>
+        <button type="button" id="email-mode-off" class="filter-pill${!sendEmail ? ' on' : ''}" onclick="setEmailMode(false)">No Email</button>
+      </div>
+      <input type="hidden" id="em-send" value="${sendEmail ? 'yes' : 'no'}">
+      <small style="display:block;margin-top:6px;color:var(--muted)">"No Email" just shows the thank-you screen after submit — no email gets sent to the visitor.</small>
+    </div>
+
+    <div id="email-sender-fields" style="display:${sendEmail ? 'block' : 'none'}">
+      <div class="field">
+        <label>Sender email</label>
+        <input id="em-sender-email" placeholder="e.g. hello@nytg.com" value="${esc(cfg.senderEmail || '')}">
+        <small style="display:block;margin-top:6px;color:var(--muted)">Leave blank to use the default sender.</small>
+      </div>
+      <div class="field">
+        <label>Sender name</label>
+        <input id="em-sender-name" placeholder="e.g. NYTG Team" value="${esc(cfg.senderName || '')}">
+      </div>
+      <div class="field">
+        <label>Reply-to email</label>
+        <input id="em-reply-to" placeholder="e.g. sales@nytg.com" value="${esc(cfg.replyToEmail || '')}">
+      </div>
+    </div>
+  `;
+}
+
+function setEmailMode(sendEmail) {
+  document.getElementById('email-mode-on')?.classList.toggle('on', sendEmail);
+  document.getElementById('email-mode-off')?.classList.toggle('on', !sendEmail);
+  const fields = document.getElementById('email-sender-fields');
+  if (fields) fields.style.display = sendEmail ? 'block' : 'none';
+  const hidden = document.getElementById('em-send');
+  if (hidden) hidden.value = sendEmail ? 'yes' : 'no';
+}
+
 async function renderSettingsPage() {
   if (!currentProject || session.role !== 'admin') {
     navigate('/hub');
@@ -965,6 +1013,8 @@ async function renderSettingsPage() {
       </div>
 
       ${scoringSettingsHTML(currentProject)}
+
+      ${emailSettingsHTML(currentProject)}
 
 <div style="display:flex;gap:12px;justify-content:space-between;margin-top:24px;flex-wrap:wrap">
   <button class="btn-secondary" style="color:#b91c1c;border-color:#fecaca" onclick="archiveProject('${currentProject.key}')">
@@ -1204,6 +1254,22 @@ const sources = sourceLines.map(label => {
     scoringRules = { thresholds: { hot, warm }, weights };
   }
 
+  const sendConfirmationEmail = document.getElementById('em-send')?.value !== 'no';
+  const senderEmail = document.getElementById('em-sender-email')?.value.trim() || '';
+  const senderName = document.getElementById('em-sender-name')?.value.trim() || '';
+  const replyToEmail = document.getElementById('em-reply-to')?.value.trim() || '';
+  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  if (senderEmail && !emailPattern.test(senderEmail)) {
+    showToast('Please enter a valid sender email.', 'error');
+    return;
+  }
+
+  if (replyToEmail && !emailPattern.test(replyToEmail)) {
+    showToast('Please enter a valid reply-to email.', 'error');
+    return;
+  }
+
   try {
 await saveProjectSettings(currentProject.key, {
   eventName,
@@ -1219,6 +1285,10 @@ await saveProjectSettings(currentProject.key, {
 followUpOptions,
 customScoring,
 scoringRules,
+sendConfirmationEmail,
+senderEmail,
+senderName,
+replyToEmail,
 });
 currentProject = {
   ...currentProject,
@@ -1235,6 +1305,10 @@ currentProject = {
 followUpOptions,
 customScoring,
 scoringRules,
+sendConfirmationEmail,
+senderEmail,
+senderName,
+replyToEmail,
 };
 
     showToast('Settings saved.', 'success');
@@ -2705,6 +2779,7 @@ window.syncProjectSlug = syncProjectSlug;
 window.submitCreateProject = submitCreateProject;
 window.submitProjectSettings = submitProjectSettings;
 window.setScoringMode = setScoringMode;
+window.setEmailMode = setEmailMode;
 window.updateScoringTotalHint = updateScoringTotalHint;
 window.needsPhoneContact = needsPhoneContact;
 window.needsLineContact = needsLineContact;
