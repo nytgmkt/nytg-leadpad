@@ -955,21 +955,6 @@ async function renderSettingsPage() {
       </div>
 
       <div class="card-header" style="margin-top:28px">
-        <h3><span class="material-symbols-outlined">check_circle</span> Thank You Page</h3>
-      </div>
-
-      <div class="field">
-        <label>Title</label>
-        <input id="st-thankyou-title" placeholder="Thank you!" value="${esc(currentProject.thankYouTitle || '')}">
-      </div>
-
-      <div class="field">
-        <label>Message</label>
-        <textarea id="st-thankyou-message" rows="4" placeholder="Your moodboard link will be sent to {{email}}&#10;&#10;Our team may follow up for further discussion.">${esc(currentProject.thankYouMessage || '')}</textarea>
-        <small style="display:block;margin-top:6px;color:var(--muted)">ใช้ {{email}} ตรงจุดที่อยากให้แสดงอีเมลที่ผู้กรอกส่งมา</small>
-      </div>
-
-      <div class="card-header" style="margin-top:28px">
         <h3><span class="material-symbols-outlined">inventory_2</span> Form options</h3>
       </div>
 
@@ -1020,6 +1005,21 @@ async function renderSettingsPage() {
       ${scoringSettingsHTML(currentProject)}
 
       ${emailSettingsHTML(currentProject)}
+
+      <div class="card-header" style="margin-top:28px">
+        <h3><span class="material-symbols-outlined">check_circle</span> Thank You Page</h3>
+      </div>
+
+      <div class="field">
+        <label>Title</label>
+        <input id="st-thankyou-title" placeholder="Thank you!" value="${esc(currentProject.thankYouTitle || '')}">
+      </div>
+
+      <div class="field">
+        <label>Message</label>
+        <textarea id="st-thankyou-message" rows="4" placeholder="Your moodboard link will be sent to {{email}}&#10;&#10;Our team may follow up for further discussion.">${esc(currentProject.thankYouMessage || '')}</textarea>
+        <small style="display:block;margin-top:6px;color:var(--muted)">ใช้ {{email}} ตรงจุดที่อยากให้แสดงอีเมลที่ผู้กรอกส่งมา</small>
+      </div>
 
 <div style="display:flex;gap:12px;justify-content:space-between;margin-top:24px;flex-wrap:wrap">
   <button class="btn-secondary" style="color:#b91c1c;border-color:#fecaca" onclick="archiveProject('${currentProject.key}')">
