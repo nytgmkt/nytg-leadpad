@@ -525,7 +525,6 @@ function updateRoleBadge() {
    AUTH
 ════════════════════════════════════ */
 async function renderLogin() {
-  currentProject = null;
   updateSidebarGeneric();
   setTopbarTitle('Team Login');
   updateRoleBadge();
@@ -2772,7 +2771,7 @@ window.navigate        = navigate;
 window.goHome          = goHome;
 window.doLogin         = () => {
   const pw = document.getElementById('pw-input')?.value || '';
-  tryLogin(pw, session.projectKey || 'bharattex2026');
+  tryLogin(pw, currentProject?.key || session.projectKey || 'bharattex2026');
 };
 window.logout          = logout;
 window.selectSource    = selectSource;
