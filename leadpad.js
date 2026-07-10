@@ -1430,8 +1430,10 @@ const productOptions = currentProject.productTypes || currentProject.apparelType
   'Other',
 ];
 
-  const chipButton = (group, value) =>
-    `<button class="chip" data-value="${esc(value)}" onclick="this.classList.toggle('selected'); if ('${group}' === 'productType' && '${value}' === 'Other') document.getElementById('product-other-field').style.display = this.classList.contains('selected') ? 'block' : 'none'; if ('${group}' === 'fabricProperties' && '${value}' === 'Other') document.getElementById('fabric-property-other-field').style.display = this.classList.contains('selected') ? 'block' : 'none';">${esc(value)}</button>`;
+  const chipButton = (group, value) => {
+    const isOther = isOtherOption(value);
+    return `<button class="chip" data-value="${esc(value)}" onclick="this.classList.toggle('selected'); if ('${group}' === 'productType' && ${isOther}) document.getElementById('product-other-field').style.display = this.classList.contains('selected') ? 'block' : 'none'; if ('${group}' === 'fabricProperties' && ${isOther}) document.getElementById('fabric-property-other-field').style.display = this.classList.contains('selected') ? 'block' : 'none';">${esc(value)}</button>`;
+  };
 
   const propertyHtml = fabricPropertyOptions.map(v => chipButton('fabricProperties', v)).join('');
   const productHtml = productOptions.map(v => chipButton('productType', v)).join('');
@@ -2144,8 +2146,8 @@ async function submitPublicForm() {
 
   const fabricPropertiesOther = document.getElementById('f-fabric-property-other')?.value.trim() || '';
   const fabricProperties = rawFabricProperties
-    .map(value => value === 'Other' && fabricPropertiesOther ? fabricPropertiesOther : value)
-    .filter(value => value !== 'Other' || fabricPropertiesOther);
+    .map(value => isOtherOption(value) && fabricPropertiesOther ? fabricPropertiesOther : value)
+    .filter(value => !isOtherOption(value) || fabricPropertiesOther);
 
   const productType = Array.from(document.querySelectorAll('#product-type-chips .chip.selected'))
     .map(chip => chip.dataset.value || chip.textContent.trim())
@@ -2153,8 +2155,8 @@ async function submitPublicForm() {
 
   const productOther = document.getElementById('f-product-other')?.value.trim() || '';
   const finalProductType = productType
-    .map(value => value === 'Other' && productOther ? productOther : value)
-    .filter(value => value !== 'Other' || productOther);
+    .map(value => isOtherOption(value) && productOther ? productOther : value)
+    .filter(value => !isOtherOption(value) || productOther);
 
   const estimatedOrderQuantity = document.getElementById('f-estimated-quantity')?.value.trim() || '';
   const followUpPreference = document.getElementById('f-follow-up')?.value.trim() || '';
@@ -2195,7 +2197,7 @@ async function submitPublicForm() {
     return;
   }
 
-  if (rawFabricProperties.includes('Other') && !fabricPropertiesOther) {
+  if (rawFabricProperties.some(isOtherOption) && !fabricPropertiesOther) {
     showToast('Please specify other fabric property.', 'error');
     return;
   }
@@ -2716,6 +2718,10 @@ function initials(name) {
 }
 function esc(s) {
   return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function isOtherOption(value) {
+  return String(value || '').trim().toLowerCase() === 'other';
 }
 
 function needsPhoneContact(method) {
