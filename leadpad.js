@@ -954,6 +954,22 @@ async function renderSettingsPage() {
         <label>Booth ID</label>
         <input id="st-booth-id" value="${esc(currentProject.boothId || '')}">
       </div>
+
+      <div class="card-header" style="margin-top:28px">
+        <h3><span class="material-symbols-outlined">check_circle</span> Thank You Page</h3>
+      </div>
+
+      <div class="field">
+        <label>Title</label>
+        <input id="st-thankyou-title" placeholder="Thank you!" value="${esc(currentProject.thankYouTitle || '')}">
+      </div>
+
+      <div class="field">
+        <label>Message</label>
+        <textarea id="st-thankyou-message" rows="4" placeholder="Your moodboard link will be sent to {{email}}&#10;&#10;Our team may follow up for further discussion.">${esc(currentProject.thankYouMessage || '')}</textarea>
+        <small style="display:block;margin-top:6px;color:var(--muted)">ใช้ {{email}} ตรงจุดที่อยากให้แสดงอีเมลที่ผู้กรอกส่งมา</small>
+      </div>
+
       <div class="card-header" style="margin-top:28px">
         <h3><span class="material-symbols-outlined">inventory_2</span> Form options</h3>
       </div>
@@ -1125,6 +1141,8 @@ async function submitProjectSettings() {
   const orgName = document.getElementById('st-org-name')?.value.trim() || '';
   const venueLine = document.getElementById('st-venue-line')?.value.trim() || '';
   const boothId = document.getElementById('st-booth-id')?.value.trim() || '';
+  const thankYouTitle = document.getElementById('st-thankyou-title')?.value.trim() || '';
+  const thankYouMessage = document.getElementById('st-thankyou-message')?.value.trim() || '';
   const fabricLines = document.getElementById('st-fabrics')?.value
     .split('\n')
     .map(value => value.trim())
@@ -1263,6 +1281,8 @@ await saveProjectSettings(currentProject.key, {
   orgName,
   venueLine,
   boothId,
+  thankYouTitle,
+  thankYouMessage,
   fabrics,
   productTypes,
   apparelTypes: productTypes,
@@ -1280,6 +1300,8 @@ currentProject = {
   orgName,
   venueLine,
   boothId,
+  thankYouTitle,
+  thankYouMessage,
   fabrics,
   productTypes,
   apparelTypes: productTypes,
@@ -1635,8 +1657,8 @@ ${followUpHtml}
       <div class="card">
         <div class="success-box">
           <span class="success-icon">✅</span>
-          <h3>Thank you!</h3>
-          <p>Your moodboard link will be sent to<br><strong id="conf-email"></strong><br><br>Our team may follow up for further discussion.</p>
+          <h3>${esc(cfg.thankYouTitle || 'Thank you!')}</h3>
+          <p id="thank-you-message"></p>
           <button class="btn-secondary" style="margin-top:16px" onclick="renderPublicForm()">Submit another</button>
         </div>
       </div>
@@ -2244,7 +2266,9 @@ async function submitPublicForm() {
     manualTemp: '',
   }));
 
-  document.getElementById('conf-email').textContent = email;
+  const template = cfg.thankYouMessage || 'Your moodboard link will be sent to {{email}}\n\nOur team may follow up for further discussion.';
+  const emailHtml = `<strong>${esc(email)}</strong>`;
+  document.getElementById('thank-you-message').innerHTML = esc(template).replace('{{email}}', emailHtml).replace(/\n/g, '<br>');
   document.getElementById('form-view').style.display = 'none';
   document.getElementById('success-view').style.display = 'block';
   window.scrollTo(0, 0);
