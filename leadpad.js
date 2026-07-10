@@ -2721,7 +2721,8 @@ function esc(s) {
 }
 
 function isOtherOption(value) {
-  return String(value || '').trim().toLowerCase() === 'other';
+  const text = String(value || '').trim().toLowerCase();
+  return text === 'other' || text === 'others';
 }
 
 function needsPhoneContact(method) {
