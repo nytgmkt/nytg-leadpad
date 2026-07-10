@@ -878,48 +878,38 @@ function updateScoringTotalHint() {
    CONFIRMATION EMAIL SETTINGS
 ════════════════════════════════════ */
 function emailSettingsHTML(cfg) {
-  const sendEmail = cfg.sendConfirmationEmail !== false;
+  const isLinked = !!cfg.brevoTemplateId;
 
   return `
     <div class="card-header" style="margin-top:28px">
-      <h3><span class="material-symbols-outlined">mail</span> Confirmation Email</h3>
+      <h3><span class="material-symbols-outlined">mail</span> Confirmation Email (Brevo EDM)</h3>
     </div>
 
     <div class="field">
       <label>After a visitor submits the form</label>
       <div style="display:flex;gap:8px;margin-top:6px">
-        <button type="button" id="email-mode-on" class="filter-pill${sendEmail ? ' on' : ''}" onclick="setEmailMode(true)">Send Email</button>
-        <button type="button" id="email-mode-off" class="filter-pill${!sendEmail ? ' on' : ''}" onclick="setEmailMode(false)">No Email</button>
+        <button type="button" id="email-mode-on" class="filter-pill${isLinked ? ' on' : ''}" onclick="setEmailMode(true)">Link Brevo EDM</button>
+        <button type="button" id="email-mode-off" class="filter-pill${!isLinked ? ' on' : ''}" onclick="setEmailMode(false)">No Email</button>
       </div>
-      <input type="hidden" id="em-send" value="${sendEmail ? 'yes' : 'no'}">
+      <input type="hidden" id="em-mode" value="${isLinked ? 'linked' : 'none'}">
       <small style="display:block;margin-top:6px;color:var(--muted)">"No Email" just shows the thank-you screen after submit — no email gets sent to the visitor.</small>
     </div>
 
-    <div id="email-sender-fields" style="display:${sendEmail ? 'block' : 'none'}">
-      <div class="field">
-        <label>Sender email</label>
-        <input id="em-sender-email" placeholder="e.g. hello@nytg.com" value="${esc(cfg.senderEmail || '')}">
-        <small style="display:block;margin-top:6px;color:var(--muted)">Leave blank to use the default sender.</small>
-      </div>
-      <div class="field">
-        <label>Sender name</label>
-        <input id="em-sender-name" placeholder="e.g. NYTG Team" value="${esc(cfg.senderName || '')}">
-      </div>
-      <div class="field">
-        <label>Reply-to email</label>
-        <input id="em-reply-to" placeholder="e.g. sales@nytg.com" value="${esc(cfg.replyToEmail || '')}">
-      </div>
+    <div id="email-template-field" class="field" style="display:${isLinked ? 'block' : 'none'}">
+      <label>Brevo Template ID</label>
+      <input type="number" id="em-template-id" min="1" placeholder="e.g. 2" value="${cfg.brevoTemplateId ? Number(cfg.brevoTemplateId) : ''}">
+      <small style="display:block;margin-top:6px;color:var(--muted)">สร้าง Email Template ใน Brevo ก่อน แล้วเอาเลข Template ID มากรอกที่นี่</small>
     </div>
   `;
 }
 
-function setEmailMode(sendEmail) {
-  document.getElementById('email-mode-on')?.classList.toggle('on', sendEmail);
-  document.getElementById('email-mode-off')?.classList.toggle('on', !sendEmail);
-  const fields = document.getElementById('email-sender-fields');
-  if (fields) fields.style.display = sendEmail ? 'block' : 'none';
-  const hidden = document.getElementById('em-send');
-  if (hidden) hidden.value = sendEmail ? 'yes' : 'no';
+function setEmailMode(isLinked) {
+  document.getElementById('email-mode-on')?.classList.toggle('on', isLinked);
+  document.getElementById('email-mode-off')?.classList.toggle('on', !isLinked);
+  const field = document.getElementById('email-template-field');
+  if (field) field.style.display = isLinked ? 'block' : 'none';
+  const hidden = document.getElementById('em-mode');
+  if (hidden) hidden.value = isLinked ? 'linked' : 'none';
 }
 
 async function renderSettingsPage() {
@@ -1254,20 +1244,17 @@ const sources = sourceLines.map(label => {
     scoringRules = { thresholds: { hot, warm }, weights };
   }
 
-  const sendConfirmationEmail = document.getElementById('em-send')?.value !== 'no';
-  const senderEmail = document.getElementById('em-sender-email')?.value.trim() || '';
-  const senderName = document.getElementById('em-sender-name')?.value.trim() || '';
-  const replyToEmail = document.getElementById('em-reply-to')?.value.trim() || '';
-  const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailLinked = document.getElementById('em-mode')?.value === 'linked';
+  let brevoTemplateId = null;
 
-  if (senderEmail && !emailPattern.test(senderEmail)) {
-    showToast('Please enter a valid sender email.', 'error');
-    return;
-  }
-
-  if (replyToEmail && !emailPattern.test(replyToEmail)) {
-    showToast('Please enter a valid reply-to email.', 'error');
-    return;
+  if (emailLinked) {
+    const templateIdRaw = document.getElementById('em-template-id')?.value.trim() || '';
+    const templateId = Number(templateIdRaw);
+    if (!templateIdRaw || !Number.isFinite(templateId) || templateId <= 0) {
+      showToast('Please enter a valid Brevo Template ID.', 'error');
+      return;
+    }
+    brevoTemplateId = templateId;
   }
 
   try {
@@ -1285,10 +1272,7 @@ await saveProjectSettings(currentProject.key, {
 followUpOptions,
 customScoring,
 scoringRules,
-sendConfirmationEmail,
-senderEmail,
-senderName,
-replyToEmail,
+brevoTemplateId,
 });
 currentProject = {
   ...currentProject,
@@ -1305,10 +1289,7 @@ currentProject = {
 followUpOptions,
 customScoring,
 scoringRules,
-sendConfirmationEmail,
-senderEmail,
-senderName,
-replyToEmail,
+brevoTemplateId,
 };
 
     showToast('Settings saved.', 'success');
